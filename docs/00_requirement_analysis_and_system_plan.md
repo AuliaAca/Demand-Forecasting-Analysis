@@ -1,20 +1,20 @@
 # DemandFlow — Phase 00: Requirement Analysis & System Planning
 
 **Status:** Planning only. No implementation code has been written and no dataset has been acquired.
-**Source of truth:** the ASTRO job description in [`CLAUDE.md` §1](../CLAUDE.md).
+**Source of truth:** the anonymized target-role profile in [`CLAUDE.md` §1](../CLAUDE.md), paraphrased from a real job description. The verbatim original and the target company's identity are kept privately, outside version control — see the notice at the top of `CLAUDE.md`.
 **Date:** 2026-09-27
 
 ### Labels used in this document
 
 | Label | Meaning |
 |---|---|
-| **[JD]** | Stated in the supplied ASTRO job description. Quoted wording is exact. |
-| **[DECISION]** | A DemandFlow implementation choice. It is not an ASTRO practice. |
-| **[ASSUMPTION]** | A simulation assumption, needed because no ASTRO data is used. |
+| **[JD]** | Stated in the target-role profile. Wording here is paraphrased, not the verbatim source text; meaning is preserved. |
+| **[DECISION]** | A DemandFlow implementation choice. It is not a practice of the target company. |
+| **[ASSUMPTION]** | A simulation assumption, needed because no target-company data is used. |
 | **[INFERENCE]** | Reasoning from the JD text, not stated in the JD. |
 | **[VERIFY]** | Taken from public documentation or estimated. To be checked against the real data in Phase 01 or later. |
 
-This document does not describe ASTRO's internal data, systems, forecasting logic, KPIs, supply-chain processes or operational practices. It contains none of these.
+This document does not describe the target company's internal data, systems, forecasting logic, KPIs, supply-chain processes or operational practices, and does not name the target company. It contains none of these.
 
 ---
 
@@ -22,10 +22,10 @@ This document does not describe ASTRO's internal data, systems, forecasting logi
 
 ### 1.0 Company context (not a requirement)
 
-The "About Astro" section describes the company: quick commerce, "groceries and essentials to your door within 15 minutes", founded in 2021. This is context, not a job requirement.
+The target JD's company-background text describes a quick-commerce company whose core value proposition is very fast delivery of groceries and everyday essentials. This is context, not a job requirement.
 
 - **[INFERENCE]** The grocery and essentials domain is a reason to prefer a grocery-retail dataset.
-- **[DECISION]** We do **not** derive technical requirements from the 15-minute promise (for example "hourly forecasting is required"). The JD does not state any.
+- **[DECISION]** We do **not** derive technical requirements from the fast-delivery positioning (for example "hourly forecasting is required"). The JD does not state any.
 
 ### 1.1 About This Position: role objective
 
@@ -126,7 +126,7 @@ Mapping format: **JD requirement → capability → proposed DemandFlow evidence
 
 | ID | JD requirement | Capability | Proposed DemandFlow evidence | Limitation / assumption |
 |---|---|---|---|---|
-| RO-1 | Improving forecast accuracy | Measure and improve accuracy | Backtested accuracy of the baselines vs improved models, broken down by segment and horizon (Phases 05–08) | Improvement is measured against our own baselines. There is no ASTRO benchmark. |
+| RO-1 | Improving forecast accuracy | Measure and improve accuracy | Backtested accuracy of the baselines vs improved models, broken down by segment and horizon (Phases 05–08) | Improvement is measured against our own baselines. There is no benchmark from the target company. |
 | RO-2 | Forecast reliability | Consistent, trustworthy forecasts | Bias tracking, error stability across forecast origins, data-quality gates before forecasting, tested pipeline (Phases 02, 08, 10, 15) | Reliability is shown on a historical replay, not in live operation |
 | RO-3 | Analyze sales and demand patterns | Pattern analysis | EDA notebook plus SQL analysis marts (Phase 04) | The dataset records **sales**, not demand. Demand during stockouts is not observed, so the data is censored. |
 | RO-4 | Develop forecasting logic | Method design | Documented logic that moves from baselines to statistical models to ML, with each feature justified by an EDA finding (Phases 05–07) | The method is our choice. The JD does not prescribe one. |
@@ -145,7 +145,7 @@ Mapping format: **JD requirement → capability → proposed DemandFlow evidence
 | M-1c | Categories | Hierarchy analysis | Family, class and perishable-flag analysis | Categories follow Favorita's own taxonomy |
 | M-1d | Campaigns | Promotion effect analysis | Promotion uplift from the `onpromotion` flag, plus retail events listed in the holiday/events file (for example Black Friday) [VERIFY] | **Partial.** The flag marks an item on promotion in a store on a day. It is not a named campaign with mechanics or budget. About 16% of `onpromotion` values are NaN. |
 | M-1e | Pricing | Price-demand analysis | None in the primary dataset. Optional secondary module (§9). | **Limited by dataset.** Favorita has **no item price**. The oil price file is a macroeconomic indicator and **must not be presented as pricing**. |
-| M-1f | Seasonal events | Calendar effects | National, regional and local holidays (including transferred and bridge days), paydays, and a documented earthquake period | The calendar is **Ecuadorian**, so Indonesian seasonal events are not represented |
+| M-1f | Seasonal events | Calendar effects | National, regional and local holidays (including transferred and bridge days), paydays, and a documented earthquake period | The calendar is **Ecuadorian**, so it does not represent the target company's actual regional seasonal calendar |
 | M-2a | Trends | Trend identification | STL decomposition, rolling trend statistics, trend features | — |
 | M-2b | Seasonality | Seasonality identification | Day-of-week, payday, monthly and annual profiles, and a seasonal-naive baseline | Only ~4.6 years of history, so annual seasonality is estimated from 4 cycles |
 | M-2c | Outliers | Outlier handling | Robust detection on residuals (MAD or IQR), and a written treatment policy: flag and cap for training, **never delete** | — |
@@ -161,7 +161,7 @@ Mapping format: **JD requirement → capability → proposed DemandFlow evidence
 | M-5c | BigQuery | Cloud warehouse | Marts loaded to BigQuery with partitioning and clustering. Bytes processed and cost are logged. (Phase 13) | The JD lists BigQuery as "a **plus**" in Requirements. Free-tier limits apply (§8). |
 | M-5d | Automate repetitive processes | Automation | One CLI command per as-of run. Nothing in the production path requires a manual notebook step. | — |
 | M-6a | Data issues | Data quality | A data-quality rule catalog recording rule, finding, severity, consequence and handling (CLAUDE.md §12). Checks run as pipeline gates. | — |
-| M-6b | Forecast discrepancies | Discrepancy detection | Discrepancy rules at segment level (for example a hub × family × week bias or WAPE beyond a threshold) | Thresholds come from the backtest distribution, not from any ASTRO KPI |
+| M-6b | Forecast discrepancies | Discrepancy detection | Discrepancy rules at segment level (for example a hub × family × week bias or WAPE beyond a threshold) | Thresholds come from the backtest distribution, not from any KPI of the target company |
 | M-6c | Root-cause analysis | RCA | An RCA workflow using a drill-down tree and error-contribution decomposition, plus written case studies that use evidence language (CLAUDE.md §13) | Findings are stated as correlation, never as proven causation |
 | M-6d | Work with relevant teams to resolve | Handoff | Each finding is routed to the stakeholder role that would own the fix, with a resolution status in the tracker | **Real collaboration is not reproducible.** Roles are simulated. |
 | M-7a | Demand Planning | Stakeholder need | A use-case document: forecasts, accuracy by segment, explanations | Simulated perspective |
@@ -223,7 +223,7 @@ Replay does two jobs. It turns a static Kaggle dataset into a realistic stream f
 
 ### What DemandFlow is not
 
-- It is not ASTRO's system, not a replica of it, and not built from ASTRO data.
+- It is not the target company's system, not a replica of it, and not built from the target company's data.
 - It is not a live production system.
 - It does not involve real stakeholders.
 - It is not an inventory optimisation or ordering engine.
@@ -232,11 +232,11 @@ Replay does two jobs. It turns a static Kaggle dataset into a realistic stream f
 
 ## 4. Business Scenario
 
-Every item in this scenario is a **[ASSUMPTION]** made so that the JD requirements can be tested. None of it describes ASTRO.
+Every item in this scenario is a **[ASSUMPTION]** made so that the JD requirements can be tested. None of it describes the target company.
 
 | # | Scenario element | Assumption | Why it is needed |
 |---|---|---|---|
-| S1 | The business | A fictional grocery retailer with many locations, called **"the Retailer"**. Its data comes from the chosen public dataset. | We need a setting that is not ASTRO |
+| S1 | The business | A fictional grocery retailer with many locations, called **"the Retailer"**. Its data comes from the chosen public dataset. | We need a setting that is not the target company |
 | S2 | Hubs | Each store in the dataset is treated as a **hub**, meaning a fulfillment location | M-1b uses the word "hubs" |
 | S3 | Planning unit | **hub × SKU × day** | This is the grain of the recommended dataset |
 | S4 | Forecast cadence | One forecast run per week, with the as-of date on a Sunday | Gives regular monitoring intervals |
@@ -246,7 +246,7 @@ Every item in this scenario is a **[ASSUMPTION]** made so that the JD requiremen
 | S8 | Stakeholder roles (fictional) | **Demand Planner**: uses forecasts and accuracy by segment. **Supply Chain / Replenishment**: uses under- and over-forecast risk flags. **Data Engineering**: owns the source data and receives data-issue tickets. **Data Science**: owns modelling methods and receives model-issue findings. | Mirrors the team names in the JD. They are perspectives, not real collaboration. |
 | S9 | Decision supported | Replenishment. DemandFlow supplies forecasts and risk signals but does **not** compute order quantities. | No stock or lead-time data is available |
 | S10 | Cost of error framing | Under-forecast is used as a proxy for lost sales (stockout risk). Over-forecast is used as a proxy for excess stock, with extra weight for **perishables**. | Links forecast error to RO-6 and RO-7 without inventory data |
-| S11 | Success criteria (project, not ASTRO KPIs) | Lower WAPE and lower absolute bias than the seasonal-naive baseline in the backtest. Alerts fire on known historical disruptions during replay. Every discrepancy is traced to evidence. | Needed to judge the project |
+| S11 | Success criteria (project, not the target company's KPIs) | Lower WAPE and lower absolute bias than the seasonal-naive baseline in the backtest. Alerts fire on known historical disruptions during replay. Every discrepancy is traced to evidence. | Needed to judge the project |
 | S12 | Alert thresholds | Taken from the backtest error distribution, for example "WAPE worse than the segment's trailing median by more than X percentage points" | Avoids inventing KPIs |
 
 ---
@@ -330,7 +330,7 @@ Legend: ✔ available · ◐ partial or proxy · ✗ not available
 
 | Dataset | Can demonstrate | Cannot demonstrate |
 |---|---|---|
-| A. Favorita | SKUs, hubs (as a proxy), categories, promotions (partial campaigns), a rich seasonal and event calendar, multi-year trend and seasonality, large-scale SQL, genuine data issues for M-6 | **Pricing.** Stockouts and availability. Named campaigns. The Indonesian calendar. |
+| A. Favorita | SKUs, hubs (as a proxy), categories, promotions (partial campaigns), a rich seasonal and event calendar, multi-year trend and seasonality, large-scale SQL, genuine data issues for M-6 | **Pricing.** Stockouts and availability. Named campaigns. The target company's actual regional calendar. |
 | B. Store Sales | Hubs, categories, calendar; quick to work with | **SKUs**, pricing, availability, large scale |
 | C. M5 | SKUs, pricing, calendar and events, multi-year patterns, large scale | **Campaigns/promotions** (only as an inference). Hub network breadth (10 stores). Fine-grained categories. |
 | D. FreshRetailNet-50K | SKUs, hubs, categories, pricing (discount), campaigns (activity flag), **availability and censored demand**, hourly patterns | **Annual seasonality, multi-year trend, most seasonal events** (the window is only ~90 days) |
@@ -358,7 +358,7 @@ Legend: ✔ available · ◐ partial or proxy · ✗ not available
 
 ## 6. Proposed Architecture
 
-This is a project design. Nothing in it describes ASTRO's architecture. It is the **minimum** needed to produce evidence for the JD items in §2.
+This is a project design. Nothing in it describes the target company's architecture. It is the **minimum** needed to produce evidence for the JD items in §2.
 
 ```
                  demandflow run --as-of YYYY-MM-DD      (Python CLI; the optional Airflow DAG calls the same tasks)
@@ -526,7 +526,7 @@ Scope follows JD coverage. Adding technologies is not a goal in itself. Phases r
 | Slack or email alert delivery | The alert logic is the evidence. Delivery is plumbing. |
 | Superset | Only if Looker Studio is rejected |
 
-**Out of scope:** inventory optimisation and order quantities, real-time streaming, managed Airflow, Vertex AI, deep-learning forecasting (unless strongly justified), and synthetic "ASTRO-like" data.
+**Out of scope:** inventory optimisation and order quantities, real-time streaming, managed Airflow, Vertex AI, deep-learning forecasting (unless strongly justified), and synthetic data fabricated to resemble the target company's own operations.
 
 ---
 
@@ -563,7 +563,7 @@ Status values at Phase 00:
 - **Dataset-dependent:** whether it can be shown depends on the dataset chosen in D1.
 - **Not project-replaceable:** a candidate attribute that no project can stand in for.
 
-| ID | ASTRO JD item | Type | DemandFlow evidence (planned) | Phase | Status | Limitation |
+| ID | Target-role JD item | Type | DemandFlow evidence (planned) | Phase | Status | Limitation |
 |---|---|---|---|---|---|---|
 | RO-1 | Improve demand forecast accuracy | Role objective | Backtest improvement over the baselines, by segment | 05–08 | Planned | Compared with our own baselines only |
 | RO-2 | Forecast reliability | Role objective | Bias and stability tracking, data-quality gates, tests | 02, 08, 10, 15 | Planned | Historical replay only |
@@ -632,7 +632,7 @@ Status values at Phase 00:
 
 | # | Risk | Impact | Mitigation |
 |---|---|---|---|
-| K1 | **Public dataset limitations.** Favorita is Ecuadorian supermarket data from 2013–2017. It is not quick commerce and has no Indonesian calendar. | Findings do not carry over to ASTRO's context | Frame the project as a method demonstration, not as ASTRO insight. State this in the README. |
+| K1 | **Public dataset limitations.** Favorita is Ecuadorian supermarket data from 2013–2017. It is not quick commerce and does not reflect the target company's actual regional calendar. | Findings do not carry over to the target company's real context | Frame the project as a method demonstration, not as insight into the target company's real operations. State this in the README. |
 | K2 | **Missing JD dimensions.** Pricing is absent, and campaigns exist only as a promotion flag. | M-1e is not demonstrated; M-1d is only partly | Record as *Limited by dataset*. Offer the optional pricing module. Never use oil price as a stand-in for pricing. |
 | K3 | **Sales are not demand (censoring).** Zero-sales rows are omitted and stockouts are invisible. | Forecasts predict sales, and under-forecasting can reinforce itself | Label outputs as sales forecasts. Add `is_imputed_zero`. Write up the limitation. Optional FreshRetailNet module. |
 | K4 | **A missing row could be zero sales or an unlisted item.** | Zero-filling everything biases forecasts down for delisted or not-yet-launched items | Zero-fill only inside an item-hub's active window (first sale to last sale). Document the rule in Phase 02 and 03. |
@@ -644,10 +644,10 @@ Status values at Phase 00:
 | K10 | **Compute limits.** ~125M rows on a laptop or in this cloud container. | Out-of-memory failures, slow runs | DuckDB and Parquet, a scoped modelling subset, and recorded memory and runtime. Confirm hardware (D10). |
 | K11 | **Environment network policy.** During this planning phase the container **blocked `www.kaggle.com`**, `huggingface.co` and `arxiv.org`. | Phase 01 cannot download data here as currently configured | Allow the Kaggle hosts in the environment's network settings, or run Phase 01 locally (D10) |
 | K12 | **Licence terms.** Kaggle competition data probably restricts redistribution. | Committing raw data may breach the terms | Raw data stays out of Git (`.gitignore`). Commit code and aggregate results only. Check the terms in Phase 01. |
-| K13 | **Collaboration with ASTRO cannot be reproduced** | M-6d and M-7 are only simulated | Label stakeholder perspectives as simulated. Never claim real collaboration. |
+| K13 | **Collaboration with the target company's real teams cannot be reproduced** | M-6d and M-7 are only simulated | Label stakeholder perspectives as simulated. Never claim real collaboration. |
 | K14 | **The experience requirement cannot be replaced** | R-1 and B-1 stay unmet | State this plainly in the README and the final audit |
-| K15 | **Misattribution.** Project decisions could end up presented as ASTRO practice. | Credibility risk in interviews | Use the labels from this document. The Phase 16 audit checks for it. |
-| K16 | **Name collision.** "Astro" is also the name of Astronomer's managed-Airflow product, which is unrelated to ASTRO the company. | Confusing documentation and search results | Always write "Airflow" and never "Astro" for orchestration. Refer to the company as "ASTRO (the JD)". |
+| K15 | **Misattribution.** Project decisions could end up presented as the target company's practice. | Credibility risk in interviews | Use the labels from this document. The Phase 16 audit checks for it. |
+| K16 | **Re-identification.** The target company's real name is deliberately withheld from this public repository (see the notice in `CLAUDE.md` §1). It could be reintroduced by accident in code, comments, commit messages, or a future edit. | Would defeat the anonymization the user asked for | Refer to it only as "the target company" or "the target role" anywhere in the repo. Keep the verbatim source and identity in `.private/`, which is git-ignored. Also note: "Astro" is separately the name of Astronomer's managed-Airflow product — write "Airflow" in this project, never "Astro", to avoid confusion in documentation and search. |
 | K17 | **Arbitrary alert thresholds** | Alert fatigue, or alerts that never fire | Derive thresholds from the backtest distribution. Replay over a known disruption to check them. |
 | K18 | **Replay is not live operation.** No late-arriving or corrected data. | Monitoring looks cleaner than it would in reality | Document it. Optionally inject a simulated late-data scenario during Phase 10–11 testing. |
 
@@ -716,6 +716,14 @@ Demand-Forecasting-Analysis/
 
 ## 14. Before We Code
 
+> **Update, 2026-09-27:** the decisions below have been reviewed and finalized by the
+> project owner. The final positions, the approved controlled-development sampling
+> methodology for Favorita, the hardware/resource assessment, and a critical
+> reassessment of the whole plan are recorded in
+> [`docs/decisions/0001-phase00-decisions-and-scope.md`](decisions/0001-phase00-decisions-and-scope.md).
+> The table below is left as originally written, as the historical record of what was
+> proposed at the end of Phase 00.
+
 ### 14.1 Decisions that need your approval
 
 | ID | Decision | Options | Recommendation |
@@ -740,7 +748,7 @@ Demand-Forecasting-Analysis/
 - **A4:** Negative `unit_sales` are returns. They are kept in staging and handled by an explicit rule in Phase 02.
 - **A5:** WAPE and bias are the main metrics. MAE and RMSE are secondary. MAPE is used only at levels with no zero actuals.
 - **A6:** Under-forecast stands in for stockout risk and over-forecast for waste risk (S10).
-- **A7:** Alert thresholds are derived from the data, not from any ASTRO KPI (S12).
+- **A7:** Alert thresholds are derived from the data, not from any KPI of the target company (S12).
 - **A8:** Time-aware validation only: rolling-origin backtests plus a final holdout made of the last weeks of history. The Kaggle test file has no labels, so it is not used for evaluation.
 
 ### 14.3 Dataset characteristics that matter

@@ -1,0 +1,51 @@
+# --- Private / not for a public repository ---
+# Verbatim source job description (real company identity + exact wording).
+# The public CLAUDE.md contains an anonymized, paraphrased version instead.
+.private/
+
+# --- Data ---
+# Raw downloads and large processed data must never be committed.
+# Only small, hand-made or explicitly-sampled fixtures under tests/fixtures/
+# or a documented, size-bounded sample under data/sample/ are allowed.
+data/raw/
+data/parquet/
+data/warehouse/
+data/interim/
+data/processed/
+*.duckdb
+*.duckdb.wal
+*.parquet
+*.csv
+!tests/fixtures/**/*.csv
+!data/sample/**/*.csv
+!data/sample/**/*.parquet
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+.venv/
+venv/
+.env
+.env.*
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+
+# --- Credentials ---
+kaggle.json
+*.pem
+*.key
+service-account*.json
+credentials*.json
+
+# --- OS / editor ---
+.DS_Store
+.vscode/
+.idea/
+
+# --- Reports / large generated artifacts ---
+reports/figures/*.png
+!reports/figures/.gitkeep

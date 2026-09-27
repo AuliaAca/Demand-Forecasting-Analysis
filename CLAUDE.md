@@ -1,90 +1,129 @@
 # CLAUDE.md
 # DemandFlow — Persistent Project Context
 
-> IMPORTANT:
-> This file contains the exact ASTRO job description supplied by the user.
-> Treat the ASTRO JOB DESCRIPTION section as the source of truth.
-> Do not invent, embellish, or silently add ASTRO requirements.
+> IMPORTANT — PUBLIC-REPOSITORY NOTICE:
+> This project was scoped against a real job description ("the target JD"), supplied
+> privately by the project owner for a Data Analyst role at a real quick-commerce
+> company. That company's name, exact wording, and identifying narrative are
+> **not reproduced in this public repository**.
 >
-> Phase prompts should reference this file rather than repeating the entire JD.
+> Section 1 below is an **anonymized, paraphrased restatement** of the target JD:
+> same requirement categories, same scope, no verbatim company copy and no
+> company name. The verbatim original is kept locally, outside version control
+> (`.private/JD_SOURCE_VERBATIM.md`, git-ignored) for the project owner's own
+> reference. Nothing in this repository, its commits, or its docs should ever
+> reintroduce that file or the company's name.
+>
+> Treat Section 1 as the source of truth for scoping. Do not invent, embellish,
+> or silently add requirements beyond what is paraphrased there.
+>
+> Phase prompts should reference this file rather than repeating the JD.
 
 ---
 
-# 1. ASTRO JOB DESCRIPTION — SOURCE OF TRUTH
+# 1. TARGET ROLE PROFILE — ANONYMIZED SOURCE OF TRUTH
 
-### About the job
+### Company context (paraphrased, non-identifying)
 
-**About Astro**
+The target JD is for a **quick-commerce company that delivers groceries and
+everyday essentials directly to consumers, with very fast (near-immediate)
+delivery as its core value proposition**. The posting describes the company as
+young, fast-growing, well-funded, and as culturally positioning itself as
+fast-moving, ambitious, and technology-driven.
 
-ASTRO is Indonesia's quick commerce company that delivers groceries and essentials to your door within 15 minutes. Founded in 2021 by a group of seasoned e-commerce executives and backed by trusted international investors, it is our mission to make people’s lives simpler and easier by saving them time, energy, and money.
+This is company background, not a technical requirement. In particular:
+- **[DECISION]** DemandFlow does not derive technical requirements from the
+  "very fast delivery" positioning (for example, "sub-hourly forecasting is
+  required"). The target JD's job description and requirements sections, below,
+  state no such requirement.
 
-Just like real Astronauts that take off into outer space, Astro embodies the values of being fast, bold, adventurous, and technologically advanced.
+### About the position (paraphrased)
 
-Interested in working for a company that pushes the boundaries and strives to be the best? Join us now to be a part of this ground-breaking mission!
+The role is a **Data Analyst supporting a Demand Planning function**, focused on
+improving demand forecast **accuracy** and **reliability**. The analyst is
+expected to analyze sales and demand patterns, develop forecasting logic, and
+build automated tools and monitoring that support inventory and fulfillment
+decisions — with the underlying goal of meeting customer demand on a
+just-in-time basis. The posting frames success as turning data into practical
+forecasting solutions and working cross-functionally to improve product
+availability.
 
-### About This Position
+### Job description / missions (paraphrased, same scope as the original)
 
-We are looking for a Data Analyst to support the Demand Planning team in improving demand forecast accuracy and reliability. You will analyze sales and demand patterns, develop forecasting logic, and build automated tools and monitoring to support inventory and fulfillment decisions, ensuring customer demand is met just-in-time.
+The role's stated missions are to:
 
-If you enjoy turning data into practical forecasting solutions and working cross-functionally to improve product availability, we would love to meet you.
+- Analyze demand patterns across **SKUs, hubs, categories, campaigns, pricing,
+  and seasonal events**.
+- Improve forecasting logic by identifying **trends, seasonality, outliers, and
+  demand anomalies**.
+- Monitor forecast accuracy and turn findings into **actionable
+  recommendations**.
+- Build automated **datasets, dashboards, trackers, and alerts** to make
+  planning faster and smarter.
+- Use **SQL, Python, and BigQuery** to transform data and automate repetitive
+  processes.
+- Investigate data issues and forecast discrepancies, perform root-cause
+  analysis, and work with relevant teams to resolve them.
+- Partner with **Demand Planning, Supply Chain, Data Engineering, and Data
+  Science** to build scalable solutions.
 
-### Job Description
+### Requirements (paraphrased, same scope as the original)
 
-As an Astronaut, your missions are:
+The stated requirements are:
 
-- Analyze demand patterns across **SKUs, hubs, categories, campaigns, pricing, and seasonal events**.
-- Improve forecasting logic by identifying **trends, seasonality, outliers, and demand anomalies**.
-- Monitor forecast accuracy and turn findings into **actionable recommendations**.
-- Build automated **datasets, dashboards, trackers, and alerts** to make planning faster and smarter.
-- Use **SQL, Python, and BigQuery** to transform data and automate repetitive processes.
-- Investigate data issues and forecast discrepancies, perform root-cause analysis, and work with relevant teams to resolve them.
-- Partner with Demand Planning, Supply Chain, Data Engineering, and Data Science to build scalable solutions.
-
-### Requirements
-
-To complete your missions, you need to have:
-
-- **1–3 years of experience** in Data Analytics, BI, Supply Chain Analytics, Analytics Engineering, or a similar role.
-- Strong **SQL** and experience working with large datasets; BigQuery is a plus.
+- **1–3 years of experience** in Data Analytics, BI, Supply Chain Analytics,
+  Analytics Engineering, or a similar role.
+- Strong **SQL** and experience working with large datasets; **BigQuery is
+  called out as a plus**, not mandatory.
 - Comfortable using **Python** for analysis and automation.
-- Understanding of **forecasting, seasonality, trends, outliers, and forecast accuracy**.
-- Experience with dashboards, reporting automation, data products, or monitoring tools.
-- Strong analytical and problem-solving skills with great attention to detail.
-- Able to turn complex analysis into **clear business insights and recommendations**.
-- Comfortable working in a fast-paced environment and collaborating across teams.
+- Understanding of **forecasting, seasonality, trends, outliers, and forecast
+  accuracy**.
+- Experience with dashboards, reporting automation, data products, or
+  monitoring tools.
+- Strong analytical and problem-solving skills with attention to detail.
+- Able to turn complex analysis into **clear business insights and
+  recommendations**.
+- Comfortable in a fast-paced environment, collaborating across teams.
 
-### Bonus points if you have:
+### Bonus points (paraphrased, same scope as the original)
 
-Experience in **e-commerce, quick commerce, retail, FMCG, or supply chain**, or exposure to Airflow, GCP, Looker Studio, Superset, Git, or machine-learning forecasting.
+Bonus signals named in the posting:
 
+- Experience in **e-commerce, quick commerce, retail, FMCG, or supply chain**.
+- Exposure to **Airflow, GCP, Looker Studio, Superset, Git, or machine-learning
+  forecasting**.
 
 ---
 
-# 2. HOW TO USE THE ASTRO JD
+# 2. HOW TO USE THIS ROLE PROFILE
 
-The purpose of DemandFlow is to build a portfolio project that demonstrates capabilities relevant to this specific JD.
+The purpose of DemandFlow is to build a portfolio project that demonstrates
+capabilities relevant to the target role above.
 
 Do NOT claim:
-- ASTRO internal data
-- ASTRO internal systems
-- ASTRO internal forecasting logic
-- ASTRO internal supply-chain processes
-- ASTRO internal operational practices
+- the target company's internal data
+- the target company's internal systems
+- the target company's internal forecasting logic
+- the target company's internal supply-chain processes
+- the target company's internal operational practices
+- the target company's name or identity anywhere in this repository
 
 The project is an industry-inspired simulation.
 
-When translating the JD into project requirements, preserve the distinction between:
+When translating the role profile into project requirements, preserve the
+distinction between:
 
 ### A. Exact JD requirement
-Directly stated in the supplied JD.
+Directly stated in Section 1 above.
 
 ### B. Project implementation decision
-A technical choice we make to demonstrate the JD.
+A technical choice we make to demonstrate the requirement.
 
 ### C. Project assumption
-A simulation assumption because we do not have ASTRO internal data.
+A simulation assumption because we do not have the target company's internal
+data.
 
-Never present B or C as an ASTRO requirement.
+Never present B or C as a requirement of the target role.
 
 ---
 
@@ -98,7 +137,7 @@ Do not create a component merely because a technology sounds impressive.
 
 ## 3.1 Demand pattern analysis
 
-JD explicitly requires analysis across:
+The role profile explicitly requires analysis across:
 - SKUs
 - hubs
 - categories
@@ -106,7 +145,8 @@ JD explicitly requires analysis across:
 - pricing
 - seasonal events
 
-DemandFlow should determine which of these are actually available in the selected public dataset.
+DemandFlow should determine which of these are actually available in the
+selected public dataset.
 
 If a dimension is unavailable:
 - document the limitation
@@ -115,20 +155,23 @@ If a dimension is unavailable:
 
 ## 3.2 Forecasting logic
 
-JD explicitly mentions:
+The role profile explicitly mentions:
 - trends
 - seasonality
 - outliers
 - demand anomalies
 - forecast accuracy
 
-DemandFlow should demonstrate these concepts through appropriate analysis and forecasting work.
+DemandFlow should demonstrate these concepts through appropriate analysis and
+forecasting work.
 
-The exact forecasting method is NOT specified by the JD. Model selection must therefore be justified by project evidence rather than falsely attributed to ASTRO.
+The exact forecasting method is NOT specified. Model selection must therefore
+be justified by project evidence rather than falsely attributed to the target
+role.
 
 ## 3.3 Forecast monitoring and recommendations
 
-JD explicitly requires:
+The role profile explicitly requires:
 - monitoring forecast accuracy
 - turning findings into actionable recommendations
 
@@ -137,17 +180,18 @@ forecast → evaluation → monitoring → finding → recommendation.
 
 ## 3.4 Automated analytical tools
 
-JD explicitly mentions:
+The role profile explicitly mentions:
 - datasets
 - dashboards
 - trackers
 - alerts
 
-The exact implementation technology is not specified for these four items. Choose technology based on usefulness, cost, and project scope.
+The exact implementation technology is not specified for these four items.
+Choose technology based on usefulness, cost, and project scope.
 
 ## 3.5 SQL / Python / BigQuery
 
-JD explicitly says:
+The role profile explicitly names:
 - SQL
 - Python
 - BigQuery
@@ -156,21 +200,22 @@ SQL and Python are explicit requirements.
 
 BigQuery is explicitly described as a plus in the requirements.
 
-Do not claim that the JD requires BigQuery as a mandatory skill.
+Do not claim that the role requires BigQuery as a mandatory skill.
 
 ## 3.6 Data issues and forecast discrepancies
 
-JD explicitly requires:
+The role profile explicitly requires:
 - investigation of data issues
 - investigation of forecast discrepancies
 - root-cause analysis
 - working with relevant teams to resolve them
 
-DemandFlow should contain a reproducible investigation/RCA workflow where the public data allows it.
+DemandFlow should contain a reproducible investigation/RCA workflow where the
+public data allows it.
 
 ## 3.7 Cross-functional collaboration
 
-JD explicitly names:
+The role profile explicitly names:
 - Demand Planning
 - Supply Chain
 - Data Engineering
@@ -178,13 +223,16 @@ JD explicitly names:
 
 DemandFlow cannot reproduce real organizational collaboration.
 
-Instead, document the relevant stakeholder/use-case perspective where appropriate. Never claim real collaboration with these teams.
+Instead, document the relevant stakeholder/use-case perspective where
+appropriate. Never claim real collaboration with these teams.
 
 ## 3.8 Scalable solutions
 
-"Build scalable solutions" is explicitly in the JD.
+"Build scalable solutions" is explicitly in the role profile.
 
-Demonstrate scalability through appropriate architecture, data modeling, reusable transformations, automation, or efficient processing where justified.
+Demonstrate scalability through appropriate architecture, data modeling,
+reusable transformations, automation, or efficient processing where
+justified.
 
 Do not manufacture enterprise-scale infrastructure just to claim scalability.
 
@@ -192,28 +240,34 @@ Do not manufacture enterprise-scale infrastructure just to claim scalability.
 
 # 4. REQUIREMENTS THAT ARE EXPERIENCE / QUALIFICATION SIGNALS
 
-The JD includes:
+The role profile includes:
 
-- 1–3 years of experience in Data Analytics, BI, Supply Chain Analytics, Analytics Engineering, or a similar role.
+- 1–3 years of experience in Data Analytics, BI, Supply Chain Analytics,
+  Analytics Engineering, or a similar role.
 
-This is a candidate experience requirement, not something the DemandFlow project can truthfully replace with "equivalent years of experience."
+This is a candidate experience requirement, not something the DemandFlow
+project can truthfully replace with "equivalent years of experience."
 
-The project can demonstrate relevant capabilities, but it must not claim that the project satisfies the stated years-of-experience requirement.
+The project can demonstrate relevant capabilities, but it must not claim that
+the project satisfies the stated years-of-experience requirement.
 
-The JD also asks for:
+The role profile also asks for:
 - strong analytical and problem-solving skills
 - attention to detail
-- ability to turn complex analysis into clear business insights and recommendations
+- ability to turn complex analysis into clear business insights and
+  recommendations
 - comfort working in a fast-paced environment
 - collaborating across teams
 
-These are partly demonstrated through project work, documentation, reasoning, and communication, but they should not be falsely presented as proven professional experience.
+These are partly demonstrated through project work, documentation, reasoning,
+and communication, but they should not be falsely presented as proven
+professional experience.
 
 ---
 
-# 5. BONUS POINTS — EXACT JD SCOPE
+# 5. BONUS POINTS — EXACT SCOPE
 
-The JD says bonus points include experience in:
+The role profile says bonus points include experience in:
 - e-commerce
 - quick commerce
 - retail
@@ -242,7 +296,8 @@ Do not force all bonus technologies into the project.
 
 **DemandFlow — Retail Demand Forecasting & Planning Intelligence Platform**
 
-The project simulates an analytics workflow supporting demand planning for a fictional retail / quick-commerce business.
+The project simulates an analytics workflow supporting demand planning for a
+fictional retail / quick-commerce business.
 
 Initial conceptual flow:
 
@@ -272,7 +327,7 @@ Dashboard
 ↓
 Business Recommendations
 
-This is a proposed architecture, NOT part of the ASTRO JD.
+This is a proposed architecture, NOT part of the target role profile.
 
 The architecture may change if a better design is justified.
 
@@ -280,10 +335,12 @@ The architecture may change if a better design is justified.
 
 # 7. PROJECT BUSINESS QUESTIONS
 
-Potential questions should be derived from the JD and available data.
+Potential questions should be derived from the role profile and available
+data.
 
 Examples:
-- How does demand vary across available SKUs, hubs/stores, categories, campaigns, pricing, and seasonal events?
+- How does demand vary across available SKUs, hubs/stores, categories,
+  campaigns, pricing, and seasonal events?
 - What trends and seasonal patterns exist?
 - Where are outliers or demand anomalies?
 - How accurate is the forecast?
@@ -305,9 +362,9 @@ Potential candidates may include:
 - M5 Forecasting Accuracy
 - other suitable public retail datasets
 
-These are dataset candidates, NOT ASTRO requirements.
+These are dataset candidates, NOT requirements of the target role.
 
-Select a dataset based on actual fit with the JD:
+Select a dataset based on actual fit with the role profile:
 - demand/sales data
 - product/SKU dimension
 - store/hub-like dimension
@@ -320,7 +377,7 @@ Select a dataset based on actual fit with the JD:
 - sufficient scale
 - reproducibility
 
-If a dataset lacks a JD dimension, document the limitation.
+If a dataset lacks a required dimension, document the limitation.
 
 ---
 
@@ -343,9 +400,11 @@ Do not add infrastructure only for appearance.
 
 # 10. FORECASTING PRINCIPLE
 
-The ASTRO JD requires understanding of forecasting and forecast accuracy, but does NOT prescribe a specific algorithm.
+The target role requires understanding of forecasting and forecast accuracy,
+but does NOT prescribe a specific algorithm.
 
-Therefore start with defensible baselines and increase complexity only when justified.
+Therefore start with defensible baselines and increase complexity only when
+justified.
 
 Possible progression:
 1. Naive
@@ -376,7 +435,7 @@ Evaluate useful segments when the data supports them.
 
 # 12. DATA QUALITY
 
-Data issues are explicitly part of the JD.
+Data issues are explicitly part of the role profile.
 
 Check for relevant issues such as:
 - missing dates
@@ -459,7 +518,8 @@ After each implementation phase, report:
 Concrete files/components.
 
 ## JD connection
-Which exact JD requirement(s) this phase provides evidence for.
+Which exact requirement(s) from the role profile this phase provides evidence
+for.
 
 ## Key decisions
 Important choices and trade-offs.
@@ -527,19 +587,20 @@ But document the decision rather than silently skipping work.
 
 # 19. HONESTY / SOURCE DISCIPLINE
 
-When referring to ASTRO:
+When referring to the target role or company:
 
-Use the supplied JD as the source.
+Use the anonymized role profile in Section 1 as the source.
 
 Do not add:
-- assumed ASTRO tools
-- assumed ASTRO architecture
-- assumed ASTRO KPIs
-- assumed ASTRO forecasting methods
-- assumed ASTRO operational processes
-- assumed ASTRO data schema
+- assumed internal tools
+- assumed internal architecture
+- assumed internal KPIs
+- assumed internal forecasting methods
+- assumed internal operational processes
+- assumed internal data schema
+- the target company's real name or identifying narrative
 
-If something is not in the JD, label it as:
+If something is not in Section 1, label it as:
 - project decision
 - assumption
 - inference
@@ -549,7 +610,8 @@ If something is not in the JD, label it as:
 
 # 20. FINAL AUDIT
 
-At Phase 16, audit DemandFlow against every relevant part of the supplied JD:
+At Phase 16, audit DemandFlow against every relevant part of the target role
+profile:
 
 ### Position purpose
 - demand forecast accuracy
