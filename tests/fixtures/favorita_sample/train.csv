@@ -50,3 +50,4 @@ id,date,store_nbr,item_nbr,unit_sales,onpromotion
 49,2013-01-18,1,100,5.0,False
 50,2013-01-19,1,100,3.0,False
 51,2013-01-20,1,100,4.0,False
+52,2013-01-20,2,104,80.0,False

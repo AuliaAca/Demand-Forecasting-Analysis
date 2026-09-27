@@ -12,7 +12,7 @@ from demandflow.ingest.convert_to_parquet import convert_all
 FIXTURE_DIR = Path(__file__).resolve().parents[1] / "fixtures" / "favorita_sample"
 
 EXPECTED_ROW_COUNTS = {
-    "train": 51,
+    "train": 52,
     "stores": 5,
     "items": 10,
     "holidays_events": 3,

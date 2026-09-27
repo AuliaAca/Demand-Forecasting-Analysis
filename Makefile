@@ -11,7 +11,7 @@
 # not a requirement — see docs/phase_reports/phase01.md for the equivalent
 # direct commands if `make` isn't available.
 
-.PHONY: install test smoke acquire convert profile select-scope dataset-card phase01 clean-smoke
+.PHONY: install test smoke acquire convert profile select-scope dataset-card phase01 clean-smoke dq dq-report phase02
 
 install:
 	pip install -e ".[dev]"
@@ -26,7 +26,7 @@ smoke:
 	python scripts/run_fixture_smoke_test.py
 
 clean-smoke:
-	rm -rf reports/phase01/fixture_smoke_test
+	rm -rf reports/fixture_smoke_test reports/phase01/fixture_smoke_test
 
 # --- Real pipeline (needs Kaggle credentials + accepted competition rules) ---
 
@@ -47,3 +47,12 @@ dataset-card:
 
 phase01: acquire convert profile select-scope dataset-card
 	@echo "Phase 01 pipeline complete. See docs/dataset_card.md"
+
+dq:
+	python -m demandflow.quality.rules
+
+dq-report:
+	python -m demandflow.reporting.generate_dq_report
+
+phase02: dq dq-report
+	@echo "Phase 02 pipeline complete. See docs/data_quality/dq_report.md"

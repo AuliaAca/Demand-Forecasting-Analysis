@@ -1,11 +1,14 @@
-"""Run the whole Phase 01 pipeline end-to-end against the synthetic fixture.
+"""Run the whole pipeline built so far, end-to-end, against the synthetic fixture.
 
 This is NOT a substitute for a real run against the actual Favorita data —
-it proves the pipeline's *plumbing* (acquire -> convert -> profile ->
-select dev scope -> render dataset card) composes correctly, using data
-this repository controls and ships in tests/fixtures/. It writes its output
-under reports/phase01/fixture_smoke_test/, never to docs/dataset_card.md,
-so it can never be mistaken for a real dataset card.
+it proves the pipeline's *plumbing* composes correctly, using data this
+repository controls and ships in tests/fixtures/. It writes its output under
+reports/fixture_smoke_test/ (git-ignored), never to docs/dataset_card.md or
+docs/data_quality/dq_report.md, so it can never be mistaken for real output.
+
+Covers, as of Phase 02:
+    acquire -> convert -> profile -> select dev scope -> render dataset card
+    -> run DQ rules -> render DQ report
 
 Usage:
     python scripts/run_fixture_smoke_test.py
@@ -23,7 +26,7 @@ sys.path.insert(0, str(REPO_ROOT / "src"))
 
 import os  # noqa: E402
 
-OUTPUT_DIR = REPO_ROOT / "reports" / "phase01" / "fixture_smoke_test"
+OUTPUT_DIR = REPO_ROOT / "reports" / "fixture_smoke_test"
 FIXTURE_DIR = REPO_ROOT / "tests" / "fixtures" / "favorita_sample"
 
 
@@ -44,7 +47,9 @@ def main() -> None:
     )
     from demandflow.ingest.convert_to_parquet import convert_all
     from demandflow.profiling.profile_favorita import profile, write_report
-    from demandflow.reporting.generate_dataset_card import generate_and_write
+    from demandflow.quality.rules import findings_to_dicts, run_all_rules
+    from demandflow.reporting.generate_dataset_card import generate_and_write as generate_dataset_card
+    from demandflow.reporting.generate_dq_report import generate_and_write as generate_dq_report
     from demandflow.scope.select_dev_scope import (
         compute_item_stats,
         stratify_and_sample,
@@ -53,28 +58,27 @@ def main() -> None:
     )
     import duckdb
     import json
-    from dataclasses import asdict
 
     cfg = load_config()
-    print(f"[1/6] Data dir for this smoke test: {cfg.paths.data_dir}")
+    print(f"[1/8] Data dir for this smoke test: {cfg.paths.data_dir}")
 
-    print("[2/6] 'Acquiring' data (copying the fixture in place of a real Kaggle download)")
+    print("[2/8] 'Acquiring' data (copying the fixture in place of a real Kaggle download)")
     _copy_fixture_as_raw(FIXTURE_DIR, cfg.paths.raw_dir)
     manifest = build_manifest(cfg.paths.raw_dir, cfg.dataset.kaggle_competition_slug)
     write_manifest(manifest, cfg.paths.raw_dir)
     print(f"       {len(manifest.files)} files checksummed")
 
-    print("[3/6] Converting CSV -> Parquet")
+    print("[3/8] Converting CSV -> Parquet")
     counts = convert_all(cfg)
     print(f"       {counts}")
 
-    print("[4/6] Profiling")
+    print("[4/8] Profiling")
     report = profile(cfg)
     profile_path = OUTPUT_DIR / "profile_summary.json"
     write_report(report, profile_path)
     print(f"       wrote {profile_path}")
 
-    print("[5/6] Selecting the controlled development scope")
+    print("[5/8] Selecting the controlled development scope")
     con = duckdb.connect()
     stats = compute_item_stats(
         con, cfg.paths.parquet_dir / "train.parquet", cfg.paths.parquet_dir / "items.parquet", cfg.dev_scope
@@ -88,9 +92,9 @@ def main() -> None:
     con.close()
     print(f"       selected {summary['selected_items']}/{summary['total_items']} items -> {dev_scope_csv_path}")
 
-    print("[6/6] Rendering the dataset card (fixture preview — NOT the real dataset card)")
+    print("[6/8] Rendering the dataset card (fixture preview — NOT the real dataset card)")
     card_path = OUTPUT_DIR / "dataset_card_PREVIEW.md"
-    generate_and_write(
+    generate_dataset_card(
         profile_path=profile_path,
         dev_scope_summary_path=summary_path,
         out_path=card_path,
@@ -98,6 +102,28 @@ def main() -> None:
         kaggle_competition_slug=cfg.dataset.kaggle_competition_slug,
     )
     print(f"       wrote {card_path}")
+
+    print("[7/8] Running the Phase 02 data-quality rule catalog")
+    con = duckdb.connect()
+    available_tables = [p.stem for p in cfg.paths.parquet_dir.glob("*.parquet")]
+    findings = run_all_rules(
+        con,
+        cfg.paths.parquet_dir / "train.parquet",
+        cfg.paths.parquet_dir / "stores.parquet",
+        cfg.paths.parquet_dir / "items.parquet",
+        available_tables=available_tables,
+    )
+    con.close()
+    findings_path = OUTPUT_DIR / "dq_findings.json"
+    findings_path.write_text(json.dumps(findings_to_dicts(findings), indent=2), encoding="utf-8")
+    severities = ", ".join(f"{f.rule_id}={f.severity}" for f in findings)
+    print(f"       {severities}")
+
+    print("[8/8] Rendering the DQ report (fixture preview — NOT the real DQ report)")
+    dq_report_path = OUTPUT_DIR / "dq_report_PREVIEW.md"
+    generate_dq_report(findings_path, dq_report_path, cfg.dataset.display_name)
+    print(f"       wrote {dq_report_path}")
+
     print("\nSmoke test complete. All outputs are under:", OUTPUT_DIR)
 
 

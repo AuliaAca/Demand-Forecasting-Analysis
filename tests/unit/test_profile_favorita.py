@@ -25,7 +25,7 @@ def cfg(tmp_path, monkeypatch):
 def test_profile_matches_hand_counted_fixture_facts(cfg):
     report = profile(cfg)
 
-    assert report.row_counts["train"] == 51
+    assert report.row_counts["train"] == 52
     assert report.row_counts["stores"] == 5
     assert report.row_counts["items"] == 10
 
@@ -49,7 +49,7 @@ def test_write_report_round_trips_as_json(cfg, tmp_path):
     report = profile(cfg)
     out_path = write_report(report, tmp_path / "profile_summary.json")
     loaded = json.loads(out_path.read_text(encoding="utf-8"))
-    assert loaded["row_counts"]["train"] == 51
+    assert loaded["row_counts"]["train"] == 52
     assert loaded["tables_present"] == sorted(
         ["train", "stores", "items", "holidays_events", "oil", "transactions"]
     )

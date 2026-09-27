@@ -27,7 +27,7 @@ def con():
 
 
 def test_row_count(con):
-    assert checks.row_count(con, FIXTURE_DIR / "train.csv") == 51
+    assert checks.row_count(con, FIXTURE_DIR / "train.csv") == 52
     assert checks.row_count(con, FIXTURE_DIR / "stores.csv") == 5
     assert checks.row_count(con, FIXTURE_DIR / "items.csv") == 10
 
@@ -36,8 +36,8 @@ def test_grain_uniqueness_detects_the_planted_duplicate(con):
     result = checks.grain_uniqueness(
         con, FIXTURE_DIR / "train.csv", ("date", "store_nbr", "item_nbr")
     )
-    assert result["total_rows"] == 51
-    assert result["distinct_key_rows"] == 50
+    assert result["total_rows"] == 52
+    assert result["distinct_key_rows"] == 51
     assert result["duplicate_rows"] == 1
     assert result["is_unique"] is False
 
@@ -61,12 +61,12 @@ def test_date_coverage_detects_the_planted_gap(con):
 
 def test_value_validity_detects_planted_negative_fractional_and_nulls(con):
     result = checks.value_validity(con, FIXTURE_DIR / "train.csv")
-    assert result["total_rows"] == 51
+    assert result["total_rows"] == 52
     assert result["negative_unit_sales_count"] == 1
     assert result["fractional_unit_sales_count"] == 1
     assert result["onpromotion_null_count"] == 5
     assert result["onpromotion_true_count"] == 7
-    assert result["onpromotion_false_count"] == 39
+    assert result["onpromotion_false_count"] == 40
     assert result["onpromotion_null_count"] + result["onpromotion_true_count"] + result[
         "onpromotion_false_count"
     ] == result["total_rows"]

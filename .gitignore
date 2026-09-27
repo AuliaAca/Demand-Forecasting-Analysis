@@ -50,8 +50,11 @@ credentials*.json
 reports/figures/*.png
 !reports/figures/.gitkeep
 
-# Phase 01 fixture smoke-test output (scripts/run_fixture_smoke_test.py):
-# fully regenerable from the committed fixture + code in one command, so it
-# is never committed itself — this also keeps it from ever being mistaken
-# for a real dataset card.
+# Fixture smoke-test output (scripts/run_fixture_smoke_test.py), spanning
+# every phase's pipeline steps as they're added: fully regenerable from the
+# committed fixture + code in one command, so it is never committed itself —
+# this also keeps it from ever being mistaken for a real dataset card or
+# real DQ report. (Named reports/phase01/... in Phase 00-01; moved here in
+# Phase 02 once the smoke test started spanning more than one phase.)
+reports/fixture_smoke_test/
 reports/phase01/fixture_smoke_test/
