@@ -49,3 +49,9 @@ credentials*.json
 # --- Reports / large generated artifacts ---
 reports/figures/*.png
 !reports/figures/.gitkeep
+
+# Phase 01 fixture smoke-test output (scripts/run_fixture_smoke_test.py):
+# fully regenerable from the committed fixture + code in one command, so it
+# is never committed itself — this also keeps it from ever being mistaken
+# for a real dataset card.
+reports/phase01/fixture_smoke_test/

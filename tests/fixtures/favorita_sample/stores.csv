@@ -1,0 +1,6 @@
+store_nbr,city,state,type,cluster
+1,Quito,Pichincha,A,1
+2,Quito,Pichincha,B,2
+3,Guayaquil,Guayas,A,1
+4,Cuenca,Azuay,C,3
+5,Manta,Manabi,B,2

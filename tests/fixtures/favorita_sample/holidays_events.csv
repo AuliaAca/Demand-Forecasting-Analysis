@@ -1,0 +1,4 @@
+date,type,locale,locale_name,description,transferred
+2013-01-01,Holiday,National,Ecuador,New Year,False
+2013-01-06,Holiday,Local,Quito,Founding Anniversary,False
+2013-01-12,Bridge,National,Ecuador,Bridge Day,True

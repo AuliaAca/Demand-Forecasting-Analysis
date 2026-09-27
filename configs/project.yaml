@@ -1,0 +1,44 @@
+# DemandFlow — project configuration
+#
+# [DECISION] Values here are project implementation choices, not requirements
+# from the target-role profile in CLAUDE.md §1. See docs/decisions/0001-*.md
+# for why each was chosen.
+
+random_seed: 42
+
+dataset:
+  # Public Kaggle competition selected as the primary dataset (ADR 0001, D1).
+  # [VERIFY] slug confirmed against the competition's own metadata during acquisition.
+  kaggle_competition_slug: "favorita-grocery-sales-forecasting"
+  display_name: "Corporación Favorita Grocery Sales Forecasting"
+  files:
+    - train.csv
+    - test.csv
+    - stores.csv
+    - items.csv
+    - holidays_events.csv
+    - oil.csv
+    - transactions.csv
+    - sample_submission.csv
+
+paths:
+  # The actual data root. Overridden by the DEMANDFLOW_DATA_DIR environment
+  # variable so the same code runs unchanged in this cloud sandbox (a small
+  # temp/test path) and on the project owner's Windows machine, where
+  # ADR 0001 §4.3 sets it to a path under D:\ (e.g. D:\dev\demandflow-data).
+  data_dir_env_var: "DEMANDFLOW_DATA_DIR"
+  default_data_dir: "data"
+  raw_subdir: "raw/favorita"
+  parquet_subdir: "parquet/favorita"
+
+dev_scope:
+  # Controlled development scope (ADR 0001 §2). Only the item/SKU dimension
+  # is subsetted; all stores and the full date range are kept.
+  target_item_fraction: 0.10
+  min_items_per_stratum_cell: 1
+  # Volume tiers computed per family, from each item's total historical
+  # unit_sales, so fast/medium/slow movers are all represented.
+  volume_quantiles: 4
+  # An item counts as "frequently promoted" if on-promotion on more than
+  # this share of its observed days. [DECISION] threshold, not a JD figure.
+  promo_intensity_threshold: 0.05
