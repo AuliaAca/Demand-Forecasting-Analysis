@@ -11,7 +11,7 @@
 # not a requirement — see docs/phase_reports/phase01.md for the equivalent
 # direct commands if `make` isn't available.
 
-.PHONY: install test smoke acquire convert profile select-scope dataset-card phase01 clean-smoke dq dq-report phase02 warehouse phase03
+.PHONY: install test smoke acquire convert profile select-scope dataset-card phase01 clean-smoke dq dq-report phase02 warehouse phase03 eda eda-report phase04
 
 install:
 	pip install -e ".[dev]"
@@ -62,3 +62,12 @@ warehouse:
 
 phase03: warehouse
 	@echo "Phase 03 pipeline complete. Warehouse at \$$DEMANDFLOW_DATA_DIR/warehouse/demandflow.duckdb"
+
+eda:
+	python -m demandflow.analysis.run_eda
+
+eda-report:
+	python -m demandflow.reporting.generate_eda_report
+
+phase04: eda eda-report
+	@echo "Phase 04 pipeline complete. See docs/eda_findings.md"
