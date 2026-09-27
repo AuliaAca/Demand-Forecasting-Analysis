@@ -11,7 +11,7 @@
 # not a requirement — see docs/phase_reports/phase01.md for the equivalent
 # direct commands if `make` isn't available.
 
-.PHONY: install test smoke acquire convert profile select-scope dataset-card phase01 clean-smoke dq dq-report phase02
+.PHONY: install test smoke acquire convert profile select-scope dataset-card phase01 clean-smoke dq dq-report phase02 warehouse phase03
 
 install:
 	pip install -e ".[dev]"
@@ -56,3 +56,9 @@ dq-report:
 
 phase02: dq dq-report
 	@echo "Phase 02 pipeline complete. See docs/data_quality/dq_report.md"
+
+warehouse:
+	python -m demandflow.transform.build_warehouse
+
+phase03: warehouse
+	@echo "Phase 03 pipeline complete. Warehouse at \$$DEMANDFLOW_DATA_DIR/warehouse/demandflow.duckdb"
