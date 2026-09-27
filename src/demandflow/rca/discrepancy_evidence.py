@@ -216,7 +216,7 @@ def _dq_flag_statement(evidence: dict[str, Any]) -> str | None:
     if not flagged:
         return None
     return (
-        f"The rows behind this discrepancy show an elevated rate of " + "; ".join(flagged) +
+        "The rows behind this discrepancy show an elevated rate of " + "; ".join(flagged) +
         " -- associated with this discrepancy, a possible contributor, not a confirmed cause."
     )
 

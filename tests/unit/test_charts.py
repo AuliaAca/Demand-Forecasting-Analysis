@@ -1,6 +1,5 @@
 """Tests for the Phase 04 chart generators."""
 
-from pathlib import Path
 
 from demandflow.analysis.charts import generate_eda_charts, plot_category_bar, plot_daily_trend
 

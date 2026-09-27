@@ -11,13 +11,22 @@
 # not a requirement — see docs/phase_reports/phase01.md for the equivalent
 # direct commands if `make` isn't available.
 
-.PHONY: install test smoke acquire convert profile select-scope dataset-card phase01 clean-smoke dq dq-report phase02 warehouse phase03 eda eda-report phase04 backtest backtest-report phase05 statistical-backtest statistical-report phase06 ml-backtest ml-report phase07 evaluate evaluate-report phase08 rca rca-report phase09 monitor monitor-report phase10 alerts alerts-report phase11 airflow-install airflow-validate airflow-test phase12 bigquery-validate phase13 dashboard phase14
+.PHONY: install test lint smoke acquire convert profile select-scope dataset-card phase01 clean-smoke dq dq-report phase02 warehouse phase03 eda eda-report phase04 backtest backtest-report phase05 statistical-backtest statistical-report phase06 ml-backtest ml-report phase07 evaluate evaluate-report phase08 rca rca-report phase09 monitor monitor-report phase10 alerts alerts-report phase11 airflow-install airflow-validate airflow-test phase12 bigquery-validate phase13 dashboard phase14 phase15
 
 install:
 	pip install -e ".[dev]"
 
 test:
 	python -m pytest -q
+
+lint:
+	ruff check src/ tests/
+
+# Same two checks .github/workflows/ci.yml runs on every push -- the
+# repository's only automated proof the suite still runs clean on a fresh
+# checkout, not just in a development sandbox (Phase 15).
+phase15: lint test
+	@echo "Phase 15 (testing & reliability): lint + full test suite passed."
 
 # Runs the whole pipeline against the small, committed synthetic fixture —
 # no Kaggle access needed. Proves the pipeline's plumbing end-to-end.

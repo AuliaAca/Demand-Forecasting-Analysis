@@ -139,3 +139,25 @@ def test_run_and_write_raises_a_clear_error_without_a_warehouse(tmp_path, monkey
     cfg = load_config()
     with pytest.raises(FileNotFoundError):
         run_and_write(cfg, db_path=tmp_path / "does_not_exist.duckdb", out_dir=tmp_path / "phase08")
+
+
+def test_run_and_write_releases_the_connection_when_the_warehouse_is_empty(tmp_path, monkeypatch):
+    # Phase 15 (reliability): before this phase's `with duckdb.connect(...)`
+    # hardening, this function's early raise (fct_sales_daily empty) fired
+    # before its own con.close() ever ran -- a real connection leak, not a
+    # hypothetical one. Proven here by immediately reopening the same file
+    # afterward: DuckDB's single-writer file lock means a second connect()
+    # to a still-open database raises, so success below shows the `with`
+    # block released the connection on the raise, not just on success.
+    monkeypatch.setenv("DEMANDFLOW_DATA_DIR", str(tmp_path / "data"))
+    cfg = load_config()
+    db_path = tmp_path / "empty_warehouse.duckdb"
+    con = duckdb.connect(str(db_path))
+    con.execute("CREATE TABLE fct_sales_daily (date DATE)")
+    con.close()
+
+    with pytest.raises(ValueError, match="nothing to evaluate"):
+        run_and_write(cfg, db_path=db_path, out_dir=tmp_path / "phase08")
+
+    reopened = duckdb.connect(str(db_path))
+    reopened.close()

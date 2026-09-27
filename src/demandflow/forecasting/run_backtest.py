@@ -15,7 +15,6 @@ from demandflow.config import ProjectConfig, load_config
 from demandflow.forecasting.backtest import (
     generate_as_of_dates,
     load_fct_forecast,
-    records_to_dicts,
     run_rolling_origin_backtest,
     summarize_backtest,
 )
@@ -37,25 +36,24 @@ def run_and_write(
     out_dir = out_dir or (cfg.paths.reports_dir / "phase05")
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    con = duckdb.connect(str(db_path))
-    (min_date, max_date) = con.execute("SELECT MIN(date), MAX(date) FROM fct_sales_daily").fetchone()
-    if min_date is None:
-        raise ValueError("fct_sales_daily is empty -- nothing to backtest.")
+    with duckdb.connect(str(db_path)) as con:
+        (min_date, max_date) = con.execute("SELECT MIN(date), MAX(date) FROM fct_sales_daily").fetchone()
+        if min_date is None:
+            raise ValueError("fct_sales_daily is empty -- nothing to backtest.")
 
-    as_of_dates = generate_as_of_dates(
-        min_date, max_date,
-        cadence_days=cfg.forecasting.as_of_cadence_days,
-        min_history_days=cfg.forecasting.min_history_days,
-    )
-    logger.info("Backtesting %d as-of date(s): %s", len(as_of_dates), as_of_dates)
+        as_of_dates = generate_as_of_dates(
+            min_date, max_date,
+            cadence_days=cfg.forecasting.as_of_cadence_days,
+            min_history_days=cfg.forecasting.min_history_days,
+        )
+        logger.info("Backtesting %d as-of date(s): %s", len(as_of_dates), as_of_dates)
 
-    records = run_rolling_origin_backtest(
-        con, as_of_dates,
-        horizon=cfg.forecasting.horizon_days,
-        season_length=cfg.forecasting.season_length_days,
-    )
-    load_fct_forecast(con, records)
-    con.close()
+        records = run_rolling_origin_backtest(
+            con, as_of_dates,
+            horizon=cfg.forecasting.horizon_days,
+            season_length=cfg.forecasting.season_length_days,
+        )
+        load_fct_forecast(con, records)
 
     summary = summarize_backtest(records)
     summary_path = out_dir / "backtest_summary.json"

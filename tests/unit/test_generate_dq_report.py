@@ -1,6 +1,5 @@
 """Tests for the DQ report generator, using real findings from the fixture."""
 
-from dataclasses import asdict
 from pathlib import Path
 
 import duckdb

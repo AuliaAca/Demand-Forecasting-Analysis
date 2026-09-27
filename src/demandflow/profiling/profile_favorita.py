@@ -65,33 +65,30 @@ def profile(config: ProjectConfig | None = None, prefer_parquet: bool = True) ->
     if missing:
         logger.warning("Tables not found and skipped: %s", missing)
 
-    con = duckdb.connect()
+    with duckdb.connect() as con:
+        row_counts = {name: checks.row_count(con, p) for name, p in paths.items()}
+        schemas = {name: checks.schema_info(con, p) for name, p in paths.items()}
 
-    row_counts = {name: checks.row_count(con, p) for name, p in paths.items()}
-    schemas = {name: checks.schema_info(con, p) for name, p in paths.items()}
+        sales_grain: dict[str, Any] = {}
+        sales_null_keys: dict[str, int] = {}
+        sales_date_coverage: dict[str, Any] = {}
+        sales_value_validity: dict[str, Any] = {}
+        referential_integrity: dict[str, Any] = {}
+        if "train" in paths:
+            sales_grain = checks.grain_uniqueness(con, paths["train"], ("date", "store_nbr", "item_nbr"))
+            sales_null_keys = checks.null_key_counts(con, paths["train"], ("date", "store_nbr", "item_nbr"))
+            sales_date_coverage = checks.date_coverage(con, paths["train"])
+            sales_value_validity = checks.value_validity(con, paths["train"])
+            if "stores" in paths and "items" in paths:
+                referential_integrity = checks.referential_integrity(
+                    con, paths["train"], paths["stores"], paths["items"]
+                )
 
-    sales_grain: dict[str, Any] = {}
-    sales_null_keys: dict[str, int] = {}
-    sales_date_coverage: dict[str, Any] = {}
-    sales_value_validity: dict[str, Any] = {}
-    referential_integrity: dict[str, Any] = {}
-    if "train" in paths:
-        sales_grain = checks.grain_uniqueness(con, paths["train"], ("date", "store_nbr", "item_nbr"))
-        sales_null_keys = checks.null_key_counts(con, paths["train"], ("date", "store_nbr", "item_nbr"))
-        sales_date_coverage = checks.date_coverage(con, paths["train"])
-        sales_value_validity = checks.value_validity(con, paths["train"])
-        if "stores" in paths and "items" in paths:
-            referential_integrity = checks.referential_integrity(
-                con, paths["train"], paths["stores"], paths["items"]
+        dimension_coverage: dict[str, Any] = {}
+        if "stores" in paths and "items" in paths and "holidays_events" in paths:
+            dimension_coverage = checks.dimension_coverage(
+                con, paths["stores"], paths["items"], paths["holidays_events"]
             )
-
-    dimension_coverage: dict[str, Any] = {}
-    if "stores" in paths and "items" in paths and "holidays_events" in paths:
-        dimension_coverage = checks.dimension_coverage(
-            con, paths["stores"], paths["items"], paths["holidays_events"]
-        )
-
-    con.close()
 
     return ProfileReport(
         profiled_at_utc=datetime.now(timezone.utc).isoformat(),

@@ -185,9 +185,8 @@ def _main() -> None:
             "Run demandflow.ingest.convert_to_parquet first."
         )
 
-    con = _duckdb.connect()
-    stats = compute_item_stats(con, train_path, items_path, cfg.dev_scope)
-    con.close()
+    with _duckdb.connect() as con:
+        stats = compute_item_stats(con, train_path, items_path, cfg.dev_scope)
 
     selection = stratify_and_sample(stats, cfg.dev_scope, seed=cfg.random_seed)
     summary = summarize_selection(selection)

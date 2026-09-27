@@ -1,6 +1,5 @@
 """Unit tests for Phase 10's monitoring signal functions (pure logic, no DB)."""
 
-import pytest
 
 from demandflow.forecasting.backtest import ForecastRecord
 from demandflow.monitoring.signals import (

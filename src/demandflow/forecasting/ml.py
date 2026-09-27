@@ -20,6 +20,17 @@ min_data_in_leaf set low enough to fit on this project's data volumes
 Deliberately not tuned, for the same reason Phase 06 didn't tune Croston's
 alpha: tuning on this little data would answer "can this be made to look
 good on 50 rows" rather than this phase's actual question.
+
+[DECISION] Phase 15 (reproducibility): a fixed random_state, plus
+deterministic=True and force_row_wise=True per LightGBM's own documented
+requirements for bit-for-bit reproducible runs (feature-parallel /
+multithreaded histogram building is otherwise nondeterministic run to
+run). 42 matches configs/project.yaml's random_seed, though this module
+does not read that config -- it has no other caller needing a different
+seed. Without this, two identical `train_model()` calls were not
+guaranteed to produce identical predictions, undercutting this project's
+"rebuild, don't trust a stale file" principle for any phase (05-11) that
+reruns the ML backtest from scratch.
 """
 
 from __future__ import annotations
@@ -28,6 +39,8 @@ import lightgbm as lgb
 import pandas as pd
 
 from demandflow.forecasting.features import ALL_FEATURE_NAMES, CATEGORICAL_FEATURE_NAMES
+
+RANDOM_SEED = 42
 
 DEFAULT_PARAMS = dict(
     objective="regression",
@@ -38,6 +51,9 @@ DEFAULT_PARAMS = dict(
     n_estimators=50,
     min_gain_to_split=0.0,
     verbosity=-1,
+    random_state=RANDOM_SEED,
+    deterministic=True,
+    force_row_wise=True,
 )
 
 # Below this many training rows, fitting a global model is not meaningful

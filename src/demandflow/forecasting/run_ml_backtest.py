@@ -110,20 +110,19 @@ def run_and_write(
     out_dir = out_dir or (cfg.paths.reports_dir / "phase07")
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    con = duckdb.connect(str(db_path))
-    (min_date, max_date) = con.execute("SELECT MIN(date), MAX(date) FROM fct_sales_daily").fetchone()
-    if min_date is None:
-        raise ValueError("fct_sales_daily is empty -- nothing to backtest.")
+    with duckdb.connect(str(db_path)) as con:
+        (min_date, max_date) = con.execute("SELECT MIN(date), MAX(date) FROM fct_sales_daily").fetchone()
+        if min_date is None:
+            raise ValueError("fct_sales_daily is empty -- nothing to backtest.")
 
-    as_of_dates = generate_as_of_dates(
-        min_date, max_date,
-        cadence_days=cfg.forecasting.as_of_cadence_days,
-        min_history_days=cfg.forecasting.min_history_days,
-    )
-    series = load_dense_series(con)
-    day_context = load_day_context(con)
-    item_attrs, store_attrs = load_static_attributes(con)
-    con.close()
+        as_of_dates = generate_as_of_dates(
+            min_date, max_date,
+            cadence_days=cfg.forecasting.as_of_cadence_days,
+            min_history_days=cfg.forecasting.min_history_days,
+        )
+        series = load_dense_series(con)
+        day_context = load_day_context(con)
+        item_attrs, store_attrs = load_static_attributes(con)
 
     examples = build_examples(series, as_of_dates, cfg.forecasting.horizon_days, day_context, item_attrs, store_attrs)
 

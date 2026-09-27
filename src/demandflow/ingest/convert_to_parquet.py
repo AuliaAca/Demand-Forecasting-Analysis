@@ -135,17 +135,16 @@ def convert_all(config: ProjectConfig | None = None) -> dict[str, int]:
     profiling) are skipped with a log message, not an error.
     """
     cfg = config or load_config()
-    con = duckdb.connect()
     results: dict[str, int] = {}
-    for table_name, columns in TABLE_SCHEMAS.items():
-        csv_path = cfg.paths.raw_dir / f"{table_name}.csv"
-        if not csv_path.exists():
-            logger.info("Skipping %s: %s not found", table_name, csv_path)
-            continue
-        parquet_path = cfg.paths.parquet_dir / f"{table_name}.parquet"
-        logger.info("Converting %s -> %s", csv_path.name, parquet_path)
-        results[table_name] = convert_table(con, csv_path, parquet_path, columns)
-    con.close()
+    with duckdb.connect() as con:
+        for table_name, columns in TABLE_SCHEMAS.items():
+            csv_path = cfg.paths.raw_dir / f"{table_name}.csv"
+            if not csv_path.exists():
+                logger.info("Skipping %s: %s not found", table_name, csv_path)
+                continue
+            parquet_path = cfg.paths.parquet_dir / f"{table_name}.parquet"
+            logger.info("Converting %s -> %s", csv_path.name, parquet_path)
+            results[table_name] = convert_table(con, csv_path, parquet_path, columns)
     return results
 
 

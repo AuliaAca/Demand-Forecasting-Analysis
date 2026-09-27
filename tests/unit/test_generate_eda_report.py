@@ -1,6 +1,5 @@
 """Tests for the EDA report generator, using a real run of the fixture warehouse."""
 
-import shutil
 from pathlib import Path
 
 import duckdb

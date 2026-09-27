@@ -467,9 +467,8 @@ def _main() -> None:
 
     available_tables = [p.stem for p in cfg.paths.parquet_dir.glob("*.parquet")]
 
-    con = duckdb.connect()
-    findings = run_all_rules(con, sales_path, stores_path, items_path, available_tables)
-    con.close()
+    with duckdb.connect() as con:
+        findings = run_all_rules(con, sales_path, stores_path, items_path, available_tables)
 
     out_path = cfg.paths.reports_dir / "phase02" / "dq_findings.json"
     out_path.parent.mkdir(parents=True, exist_ok=True)

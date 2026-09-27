@@ -18,6 +18,7 @@ dependencies = [
 dev = [
     "pytest>=8.0",
     "sqlglot>=25.0",
+    "ruff>=0.15,<0.16",
 ]
 
 [build-system]
@@ -30,3 +31,12 @@ where = ["src"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["src"]
+
+[tool.ruff]
+# [DECISION] Phase 15 (CI/reliability, per docs/00_requirement_analysis_and_
+# system_plan.md's "Phase 15: testing and reliability (CI, idempotent runs,
+# end-to-end smoke test on fixtures)"). Default rule set (pyflakes: unused
+# imports/names, undefined names) only -- catching real bugs (F401, F821,
+# etc.), not imposing a style opinion across 14 already-reviewed phases'
+# worth of code. Line length matches this project's existing wrapping.
+line-length = 120

@@ -65,10 +65,9 @@ def run_and_write(
     out_dir.mkdir(parents=True, exist_ok=True)
 
     # --- Part A: data issues (returns, extreme values) ---
-    con = duckdb.connect(str(db_path))
-    flagged_rows = load_flagged_rows_with_context(con)
-    baseline_business_context = load_baseline_rates(con)
-    con.close()
+    with duckdb.connect(str(db_path)) as con:
+        flagged_rows = load_flagged_rows_with_context(con)
+        baseline_business_context = load_baseline_rates(con)
 
     data_issue_evidence = gather_data_issue_evidence(flagged_rows, baseline_business_context)
     data_issue_records = build_data_issue_rca(data_issue_evidence)
@@ -79,17 +78,16 @@ def run_and_write(
     all_findings = eval_summary.get("findings", [])
     triggers = [f for f in all_findings if f["category"] in DISCREPANCY_FINDING_CATEGORIES]
 
-    con = duckdb.connect(str(db_path))
-    scored_rows = load_scored_forecasts_with_context(con)
-    item_to_class = load_intermittency_classes(con)
-    trend = network_trend_slope(con)
-    baseline_dq_rates = dq_flag_rates(scored_rows)
+    with duckdb.connect(str(db_path)) as con:
+        scored_rows = load_scored_forecasts_with_context(con)
+        item_to_class = load_intermittency_classes(con)
+        trend = network_trend_slope(con)
+        baseline_dq_rates = dq_flag_rates(scored_rows)
 
-    discrepancy_records = []
-    for finding in triggers:
-        evidence = gather_discrepancy_evidence(con, finding, scored_rows, baseline_dq_rates, trend, item_to_class)
-        discrepancy_records.append(build_discrepancy_rca(finding, evidence))
-    con.close()
+        discrepancy_records = []
+        for finding in triggers:
+            evidence = gather_discrepancy_evidence(con, finding, scored_rows, baseline_dq_rates, trend, item_to_class)
+            discrepancy_records.append(build_discrepancy_rca(finding, evidence))
 
     summary = {
         "data_issue_rca": data_issue_records,

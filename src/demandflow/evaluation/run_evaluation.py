@@ -54,27 +54,26 @@ def run_and_write(
     out_dir = out_dir or (cfg.paths.reports_dir / "phase08")
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    con = duckdb.connect(str(db_path))
-    (min_date, max_date) = con.execute("SELECT MIN(date), MAX(date) FROM fct_sales_daily").fetchone()
-    if min_date is None:
-        raise ValueError("fct_sales_daily is empty -- nothing to evaluate.")
+    with duckdb.connect(str(db_path)) as con:
+        (min_date, max_date) = con.execute("SELECT MIN(date), MAX(date) FROM fct_sales_daily").fetchone()
+        if min_date is None:
+            raise ValueError("fct_sales_daily is empty -- nothing to evaluate.")
 
-    as_of_dates = generate_as_of_dates(
-        min_date, max_date,
-        cadence_days=cfg.forecasting.as_of_cadence_days,
-        min_history_days=cfg.forecasting.min_history_days,
-    )
-    models = build_extended_models(cfg.forecasting.season_length_days)
-    logger.info(
-        "Rebuilding fct_forecast for evaluation: %d as-of date(s) x %d model(s)",
-        len(as_of_dates), len(models),
-    )
-    records = run_rolling_origin_backtest(con, as_of_dates, horizon=cfg.forecasting.horizon_days, models=models)
-    load_fct_forecast(con, records)
+        as_of_dates = generate_as_of_dates(
+            min_date, max_date,
+            cadence_days=cfg.forecasting.as_of_cadence_days,
+            min_history_days=cfg.forecasting.min_history_days,
+        )
+        models = build_extended_models(cfg.forecasting.season_length_days)
+        logger.info(
+            "Rebuilding fct_forecast for evaluation: %d as-of date(s) x %d model(s)",
+            len(as_of_dates), len(models),
+        )
+        records = run_rolling_origin_backtest(con, as_of_dates, horizon=cfg.forecasting.horizon_days, models=models)
+        load_fct_forecast(con, records)
 
-    intermittency_by_item = load_intermittency_classes(con)
-    scored_rows = load_scored_forecasts_with_context(con)
-    con.close()
+        intermittency_by_item = load_intermittency_classes(con)
+        scored_rows = load_scored_forecasts_with_context(con)
 
     backtest_summary = summarize_backtest(records)
     overall_by_model = backtest_summary["overall_by_model"]

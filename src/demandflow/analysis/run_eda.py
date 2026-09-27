@@ -31,9 +31,8 @@ def run_and_write(
     out_dir = out_dir or (cfg.paths.reports_dir / "phase04")
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    con = duckdb.connect(str(db_path))
-    summary = run_full_eda(con)
-    con.close()
+    with duckdb.connect(str(db_path)) as con:
+        summary = run_full_eda(con)
 
     summary_path = out_dir / "eda_summary.json"
     summary_path.write_text(json.dumps(summary, indent=2), encoding="utf-8")

@@ -5,7 +5,6 @@ by actually running the analysis and checking the numbers (see
 docs/phase_reports/phase04.md), not just asserting "it runs without error".
 """
 
-import shutil
 from pathlib import Path
 
 import duckdb

@@ -61,31 +61,28 @@ def run_and_write(
     available_tables = [p.stem for p in cfg.paths.parquet_dir.glob("*.parquet")]
 
     # --- Data quality ---
-    con = duckdb.connect()
-    dq_findings = run_all_rules(con, sales_path, stores_path, items_path, available_tables)
-    con.close()
+    with duckdb.connect() as con:
+        dq_findings = run_all_rules(con, sales_path, stores_path, items_path, available_tables)
     dq_sig = data_quality_signal(dq_findings)
 
     # --- Anomalies ---
-    con = duckdb.connect(str(db_path))
-    trend = trend_summary(con)
-    anomalies = network_anomalies(trend["daily_totals"])
-    anomaly_sig = anomaly_signal(trend["daily_totals"], anomalies)
+    with duckdb.connect(str(db_path)) as con:
+        trend = trend_summary(con)
+        anomalies = network_anomalies(trend["daily_totals"])
+        anomaly_sig = anomaly_signal(trend["daily_totals"], anomalies)
 
-    # --- Forecast accuracy + deterioration (fresh 5-model backtest) ---
-    (min_date, max_date) = con.execute("SELECT MIN(date), MAX(date) FROM fct_sales_daily").fetchone()
-    if min_date is None:
-        con.close()
-        raise ValueError("fct_sales_daily is empty -- nothing to monitor.")
+        # --- Forecast accuracy + deterioration (fresh 5-model backtest) ---
+        (min_date, max_date) = con.execute("SELECT MIN(date), MAX(date) FROM fct_sales_daily").fetchone()
+        if min_date is None:
+            raise ValueError("fct_sales_daily is empty -- nothing to monitor.")
 
-    as_of_dates = generate_as_of_dates(
-        min_date, max_date,
-        cadence_days=cfg.forecasting.as_of_cadence_days,
-        min_history_days=cfg.forecasting.min_history_days,
-    )
-    models = build_extended_models(cfg.forecasting.season_length_days)
-    records = run_rolling_origin_backtest(con, as_of_dates, horizon=cfg.forecasting.horizon_days, models=models)
-    con.close()
+        as_of_dates = generate_as_of_dates(
+            min_date, max_date,
+            cadence_days=cfg.forecasting.as_of_cadence_days,
+            min_history_days=cfg.forecasting.min_history_days,
+        )
+        models = build_extended_models(cfg.forecasting.season_length_days)
+        records = run_rolling_origin_backtest(con, as_of_dates, horizon=cfg.forecasting.horizon_days, models=models)
 
     backtest_summary = summarize_backtest(records)
     champion_model = backtest_summary["lower_wape_model"]

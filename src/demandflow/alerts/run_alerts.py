@@ -61,17 +61,16 @@ def run_and_write(
     rca_result = run_rca(cfg, db_path=db_path, out_dir=out_dir / "_rca_rebuild")
     rca_summary = rca_result["summary"]
 
-    con = duckdb.connect(str(db_path))
-    run_seq = record_snapshot(con, snapshot)
-    previous_signals, current_signals = load_last_two_runs(con)
-    alerts = compute_alerts(previous_signals, current_signals)
-    recent_history = load_recent_run_overall_statuses(con)
+    with duckdb.connect(str(db_path)) as con:
+        run_seq = record_snapshot(con, snapshot)
+        previous_signals, current_signals = load_last_two_runs(con)
+        alerts = compute_alerts(previous_signals, current_signals)
+        recent_history = load_recent_run_overall_statuses(con)
 
-    calendar_items = calendar_gap_tracker_items(snapshot["dq_findings"])
-    discrepancy_items = discrepancy_rca_tracker_items(rca_summary)
-    tracker_upsert_result = upsert_tracker_items(con, calendar_items + discrepancy_items, run_timestamp=snapshot["generated_at"])
-    open_tracker_items = load_tracker_items(con, open_only=True)
-    con.close()
+        calendar_items = calendar_gap_tracker_items(snapshot["dq_findings"])
+        discrepancy_items = discrepancy_rca_tracker_items(rca_summary)
+        tracker_upsert_result = upsert_tracker_items(con, calendar_items + discrepancy_items, run_timestamp=snapshot["generated_at"])
+        open_tracker_items = load_tracker_items(con, open_only=True)
 
     summary = {
         "run_seq": run_seq,

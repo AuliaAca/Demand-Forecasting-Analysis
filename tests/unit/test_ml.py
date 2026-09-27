@@ -46,3 +46,14 @@ def test_predict_handles_nan_features_without_raising():
     preds = predict(model, [sparse_row])
     assert len(preds) == 1
     assert not math.isnan(preds[0])
+
+
+def test_train_model_is_deterministic_across_repeated_calls():
+    # Phase 15 (reproducibility): two independently-trained models on
+    # identical inputs must yield bit-identical predictions -- otherwise
+    # every phase that reruns the ML backtest ("rebuild, don't trust a
+    # stale file") could silently drift run to run.
+    rows, labels = _rows(30)
+    model_a = train_model(rows, labels)
+    model_b = train_model(rows, labels)
+    assert predict(model_a, rows) == predict(model_b, rows)

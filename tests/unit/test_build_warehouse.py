@@ -6,7 +6,6 @@ about tests/fixtures/favorita_sample/ -- the same fixture Phase 01/02 use,
 now carried one layer further into staging/intermediate/marts.
 """
 
-import shutil
 from pathlib import Path
 
 import duckdb
