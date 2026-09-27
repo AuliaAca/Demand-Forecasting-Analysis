@@ -11,7 +11,7 @@
 # not a requirement — see docs/phase_reports/phase01.md for the equivalent
 # direct commands if `make` isn't available.
 
-.PHONY: install test smoke acquire convert profile select-scope dataset-card phase01 clean-smoke dq dq-report phase02 warehouse phase03 eda eda-report phase04 backtest backtest-report phase05 statistical-backtest statistical-report phase06 ml-backtest ml-report phase07 evaluate evaluate-report phase08
+.PHONY: install test smoke acquire convert profile select-scope dataset-card phase01 clean-smoke dq dq-report phase02 warehouse phase03 eda eda-report phase04 backtest backtest-report phase05 statistical-backtest statistical-report phase06 ml-backtest ml-report phase07 evaluate evaluate-report phase08 rca rca-report phase09
 
 install:
 	pip install -e ".[dev]"
@@ -107,3 +107,12 @@ evaluate-report:
 
 phase08: evaluate evaluate-report
 	@echo "Phase 08 pipeline complete. See docs/forecast_evaluation.md"
+
+rca:
+	python -m demandflow.rca.run_rca
+
+rca-report:
+	python -m demandflow.reporting.generate_rca_report
+
+phase09: rca rca-report
+	@echo "Phase 09 pipeline complete. See docs/root_cause_analysis.md"

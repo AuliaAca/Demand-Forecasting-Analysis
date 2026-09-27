@@ -6,7 +6,7 @@ repository controls and ships in tests/fixtures/. It writes its output under
 reports/fixture_smoke_test/ (git-ignored), never to docs/dataset_card.md or
 docs/data_quality/dq_report.md, so it can never be mistaken for real output.
 
-Covers, as of Phase 08:
+Covers, as of Phase 09:
     acquire -> convert -> profile -> select dev scope -> render dataset card
     -> run DQ rules -> render DQ report -> build the SQL warehouse
     (staging -> intermediate -> marts) -> reconciliation checks -> run the
@@ -17,7 +17,8 @@ Covers, as of Phase 08:
     ML backtest (leakage-safe features, LightGBM) -> render the ML report
     -> run the Phase 08 forecast evaluation (segment/horizon/time
     breakdowns, actionable findings) -> render the forecast evaluation
-    report
+    report -> run the Phase 09 root-cause analysis (data issues, forecast
+    discrepancies) -> render the root cause analysis report
 
 Usage:
     python scripts/run_fixture_smoke_test.py
@@ -69,25 +70,25 @@ def main() -> None:
     import json
 
     cfg = load_config()
-    print(f"[1/19] Data dir for this smoke test: {cfg.paths.data_dir}")
+    print(f"[1/21] Data dir for this smoke test: {cfg.paths.data_dir}")
 
-    print("[2/19] 'Acquiring' data (copying the fixture in place of a real Kaggle download)")
+    print("[2/21] 'Acquiring' data (copying the fixture in place of a real Kaggle download)")
     _copy_fixture_as_raw(FIXTURE_DIR, cfg.paths.raw_dir)
     manifest = build_manifest(cfg.paths.raw_dir, cfg.dataset.kaggle_competition_slug)
     write_manifest(manifest, cfg.paths.raw_dir)
     print(f"       {len(manifest.files)} files checksummed")
 
-    print("[3/19] Converting CSV -> Parquet")
+    print("[3/21] Converting CSV -> Parquet")
     counts = convert_all(cfg)
     print(f"       {counts}")
 
-    print("[4/19] Profiling")
+    print("[4/21] Profiling")
     report = profile(cfg)
     profile_path = OUTPUT_DIR / "profile_summary.json"
     write_report(report, profile_path)
     print(f"       wrote {profile_path}")
 
-    print("[5/19] Selecting the controlled development scope")
+    print("[5/21] Selecting the controlled development scope")
     con = duckdb.connect()
     stats = compute_item_stats(
         con, cfg.paths.parquet_dir / "train.parquet", cfg.paths.parquet_dir / "items.parquet", cfg.dev_scope
@@ -101,7 +102,7 @@ def main() -> None:
     con.close()
     print(f"       selected {summary['selected_items']}/{summary['total_items']} items -> {dev_scope_csv_path}")
 
-    print("[6/19] Rendering the dataset card (fixture preview — NOT the real dataset card)")
+    print("[6/21] Rendering the dataset card (fixture preview — NOT the real dataset card)")
     card_path = OUTPUT_DIR / "dataset_card_PREVIEW.md"
     generate_dataset_card(
         profile_path=profile_path,
@@ -112,7 +113,7 @@ def main() -> None:
     )
     print(f"       wrote {card_path}")
 
-    print("[7/19] Running the Phase 02 data-quality rule catalog")
+    print("[7/21] Running the Phase 02 data-quality rule catalog")
     con = duckdb.connect()
     available_tables = [p.stem for p in cfg.paths.parquet_dir.glob("*.parquet")]
     findings = run_all_rules(
@@ -128,12 +129,12 @@ def main() -> None:
     severities = ", ".join(f"{f.rule_id}={f.severity}" for f in findings)
     print(f"       {severities}")
 
-    print("[8/19] Rendering the DQ report (fixture preview — NOT the real DQ report)")
+    print("[8/21] Rendering the DQ report (fixture preview — NOT the real DQ report)")
     dq_report_path = OUTPUT_DIR / "dq_report_PREVIEW.md"
     generate_dq_report(findings_path, dq_report_path, cfg.dataset.display_name)
     print(f"       wrote {dq_report_path}")
 
-    print("[9/19] Building the SQL warehouse (staging -> intermediate -> marts) and reconciling")
+    print("[9/21] Building the SQL warehouse (staging -> intermediate -> marts) and reconciling")
     from demandflow.transform.build_warehouse import build_warehouse
 
     warehouse_db_path = OUTPUT_DIR / "warehouse.duckdb"
@@ -145,13 +146,13 @@ def main() -> None:
         print(f"       [{'PASS' if c.passed else 'FAIL'}] {c.name}: {c.detail}")
     failed = [c for c in checks if not c.passed]
 
-    print("[10/19] Running the Phase 04 exploratory demand analysis")
+    print("[10/21] Running the Phase 04 exploratory demand analysis")
     from demandflow.analysis.run_eda import run_and_write
 
     eda_result = run_and_write(cfg, db_path=warehouse_db_path, out_dir=OUTPUT_DIR / "phase04")
     print(f"       wrote {eda_result['summary_path']} and {len(eda_result['chart_paths'])} chart(s)")
 
-    print("[11/19] Rendering the EDA findings report (fixture preview — NOT the real findings)")
+    print("[11/21] Rendering the EDA findings report (fixture preview — NOT the real findings)")
     from demandflow.reporting.generate_eda_report import generate_and_write as generate_eda_report
 
     eda_report_path = OUTPUT_DIR / "eda_findings_PREVIEW.md"
@@ -159,7 +160,7 @@ def main() -> None:
     generate_eda_report(eda_result["summary_path"], eda_report_path, cfg.dataset.display_name, eda_chart_paths)
     print(f"       wrote {eda_report_path}")
 
-    print("[12/19] Running the Phase 05 rolling-origin backtest (Naive vs. Seasonal Naive)")
+    print("[12/21] Running the Phase 05 rolling-origin backtest (Naive vs. Seasonal Naive)")
     from demandflow.forecasting.run_backtest import run_and_write as run_backtest
 
     backtest_result = run_backtest(cfg, db_path=warehouse_db_path, out_dir=OUTPUT_DIR / "phase05")
@@ -169,7 +170,7 @@ def main() -> None:
         f"lower-WAPE model: {bt_summary['lower_wape_model']}"
     )
 
-    print("[13/19] Rendering the forecast baselines report (fixture preview — NOT the real report)")
+    print("[13/21] Rendering the forecast baselines report (fixture preview — NOT the real report)")
     from demandflow.reporting.generate_forecast_baselines_report import (
         generate_and_write as generate_backtest_report,
     )
@@ -181,7 +182,7 @@ def main() -> None:
     )
     print(f"       wrote {backtest_report_path}")
 
-    print("[14/19] Running the Phase 06 statistical-models backtest (SES, Croston, SBA)")
+    print("[14/21] Running the Phase 06 statistical-models backtest (SES, Croston, SBA)")
     from demandflow.forecasting.run_statistical_backtest import run_and_write as run_statistical_backtest
 
     stat_result = run_statistical_backtest(cfg, db_path=warehouse_db_path, out_dir=OUTPUT_DIR / "phase06")
@@ -191,7 +192,7 @@ def main() -> None:
         f"lower-WAPE model overall: {stat_summary['lower_wape_model']}"
     )
 
-    print("[15/19] Rendering the statistical models report (fixture preview — NOT the real report)")
+    print("[15/21] Rendering the statistical models report (fixture preview — NOT the real report)")
     from demandflow.reporting.generate_statistical_models_report import (
         generate_and_write as generate_statistical_report,
     )
@@ -203,7 +204,7 @@ def main() -> None:
     )
     print(f"       wrote {statistical_report_path}")
 
-    print("[16/19] Running the Phase 07 ML backtest (LightGBM, leakage-safe features)")
+    print("[16/21] Running the Phase 07 ML backtest (LightGBM, leakage-safe features)")
     from demandflow.forecasting.run_ml_backtest import run_and_write as run_ml_backtest
 
     ml_result = run_ml_backtest(cfg, db_path=warehouse_db_path, out_dir=OUTPUT_DIR / "phase07")
@@ -214,14 +215,14 @@ def main() -> None:
         f"lower-WAPE model: {ml_summary['lower_wape_model']}"
     )
 
-    print("[17/19] Rendering the ML forecasting report (fixture preview — NOT the real report)")
+    print("[17/21] Rendering the ML forecasting report (fixture preview — NOT the real report)")
     from demandflow.reporting.generate_ml_report import generate_and_write as generate_ml_report
 
     ml_report_path = OUTPUT_DIR / "ml_forecasting_PREVIEW.md"
     generate_ml_report(ml_result["summary_path"], ml_report_path, cfg.dataset.display_name, cfg.forecasting.horizon_days)
     print(f"       wrote {ml_report_path}")
 
-    print("[18/19] Running the Phase 08 forecast evaluation (segments, horizon, time, findings)")
+    print("[18/21] Running the Phase 08 forecast evaluation (segments, horizon, time, findings)")
     from demandflow.evaluation.run_evaluation import run_and_write as run_evaluation
 
     eval_result = run_evaluation(cfg, db_path=warehouse_db_path, out_dir=OUTPUT_DIR / "phase08")
@@ -231,7 +232,7 @@ def main() -> None:
         f"{len(eval_summary['findings'])} finding(s)"
     )
 
-    print("[19/19] Rendering the forecast evaluation report (fixture preview — NOT the real report)")
+    print("[19/21] Rendering the forecast evaluation report (fixture preview — NOT the real report)")
     from demandflow.reporting.generate_evaluation_report import generate_and_write as generate_evaluation_report
 
     evaluation_report_path = OUTPUT_DIR / "forecast_evaluation_PREVIEW.md"
@@ -239,6 +240,23 @@ def main() -> None:
         eval_result["summary_path"], evaluation_report_path, cfg.dataset.display_name, cfg.forecasting.horizon_days
     )
     print(f"       wrote {evaluation_report_path}")
+
+    print("[20/21] Running the Phase 09 root-cause analysis (data issues + forecast discrepancies)")
+    from demandflow.rca.run_rca import run_and_write as run_rca
+
+    rca_result = run_rca(cfg, db_path=warehouse_db_path, out_dir=OUTPUT_DIR / "phase09")
+    rca_summary = rca_result["summary"]
+    print(
+        f"       {len(rca_summary['data_issue_rca'])} data-issue record(s); "
+        f"{rca_summary['forecast_discrepancy_triggers_investigated']} forecast-discrepancy trigger(s) investigated"
+    )
+
+    print("[21/21] Rendering the root cause analysis report (fixture preview — NOT the real report)")
+    from demandflow.reporting.generate_rca_report import generate_and_write as generate_rca_report
+
+    rca_report_path = OUTPUT_DIR / "root_cause_analysis_PREVIEW.md"
+    generate_rca_report(rca_result["summary_path"], rca_report_path, cfg.dataset.display_name)
+    print(f"       wrote {rca_report_path}")
 
     print("\nSmoke test complete. All outputs are under:", OUTPUT_DIR)
     if failed:

@@ -45,9 +45,13 @@ Row = dict[str, Any]
 def load_scored_forecasts_with_context(con: duckdb.DuckDBPyConnection) -> list[Row]:
     """One row per scored fct_forecast record, joined with the dimension
     context every breakdown below needs: SKU family (category), hub
-    store_type/cluster, and the target date's promotion/holiday/payday
-    status -- the same JD dimensions Phase 04 analyzed for demand, now
-    carried alongside each forecast's error.
+    store_type/cluster, the target date's promotion/holiday/payday status
+    -- the same JD dimensions Phase 04 analyzed for demand, now carried
+    alongside each forecast's error -- and the target date's own DQ flags
+    (extreme value, return, imputed zero), which this module doesn't use
+    itself but Phase 09's root-cause analysis does, to check whether a
+    forecast discrepancy coincides with a data-quality issue rather than
+    recomputing the same join there.
 
     Every is_scored row's target_date falls inside its series' observed
     active window (backtest.py's contract), which is itself inside
@@ -67,7 +71,10 @@ def load_scored_forecasts_with_context(con: duckdb.DuckDBPyConnection) -> list[R
             COALESCE(sd.onpromotion_filled, FALSE) AS target_onpromotion,
             COALESCE(sd.is_promotion_unknown, TRUE) AS target_promotion_unknown,
             COALESCE(cal.is_holiday, FALSE) AS target_is_holiday,
-            COALESCE(cal.is_payday, FALSE) AS target_is_payday
+            COALESCE(cal.is_payday, FALSE) AS target_is_payday,
+            COALESCE(sd.is_extreme_value, FALSE) AS target_is_extreme_value,
+            COALESCE(sd.is_return, FALSE) AS target_is_return,
+            COALESCE(sd.is_imputed_zero, FALSE) AS target_is_imputed_zero
         FROM fct_forecast f
         JOIN dim_sku sku ON sku.item_nbr = f.item_nbr
         JOIN dim_hub hub ON hub.store_nbr = f.store_nbr
@@ -114,53 +121,93 @@ def evaluate_by_dimension(rows: list[Row], key_fn: Callable[[Row], Any]) -> dict
     return result
 
 
+def _horizon_step_key(r: Row) -> Any:
+    return r["horizon_step"]
+
+
+def _as_of_date_key(r: Row) -> Any:
+    return r["as_of_date"]
+
+
+def _item_family_key(r: Row) -> Any:
+    return r["item_family"]
+
+
+def _store_type_key(r: Row) -> Any:
+    return r["store_type"]
+
+
+def _cluster_key(r: Row) -> Any:
+    return r["cluster"]
+
+
+def _promotion_key(r: Row) -> Any:
+    """None (excluded) when the target date's promotion status is unknown
+    (raw source null), rather than defaulting it into "not_promoted" -- the
+    same standard Phase 04's promotion_effect() holds itself to."""
+    if r["target_promotion_unknown"]:
+        return None
+    return "promoted" if r["target_onpromotion"] else "not_promoted"
+
+
+def _holiday_key(r: Row) -> Any:
+    return "holiday" if r["target_is_holiday"] else "non_holiday"
+
+
+def _payday_key(r: Row) -> Any:
+    return "payday" if r["target_is_payday"] else "non_payday"
+
+
+# Exposed (not just used internally) so Phase 09's root-cause analysis can
+# recover exactly which scored-forecast rows belong to a given Phase 08
+# segment, without re-deriving or duplicating this grouping logic.
+SEGMENT_KEY_FUNCTIONS: dict[str, Callable[[Row], Any]] = {
+    "item_family": _item_family_key,
+    "store_type": _store_type_key,
+    "cluster": _cluster_key,
+    "promotion": _promotion_key,
+    "holiday": _holiday_key,
+    "payday": _payday_key,
+    "horizon_step": _horizon_step_key,
+    "as_of_date": _as_of_date_key,
+}
+
+
 def evaluate_by_horizon_step(rows: list[Row]) -> dict[str, dict[str, dict]]:
-    return evaluate_by_dimension(rows, lambda r: r["horizon_step"])
+    return evaluate_by_dimension(rows, _horizon_step_key)
 
 
 def evaluate_by_as_of_date(rows: list[Row]) -> dict[str, dict[str, dict]]:
-    return evaluate_by_dimension(rows, lambda r: r["as_of_date"])
+    return evaluate_by_dimension(rows, _as_of_date_key)
 
 
 def evaluate_by_item_family(rows: list[Row]) -> dict[str, dict[str, dict]]:
-    return evaluate_by_dimension(rows, lambda r: r["item_family"])
+    return evaluate_by_dimension(rows, _item_family_key)
 
 
 def evaluate_by_store_type(rows: list[Row]) -> dict[str, dict[str, dict]]:
-    return evaluate_by_dimension(rows, lambda r: r["store_type"])
+    return evaluate_by_dimension(rows, _store_type_key)
 
 
 def evaluate_by_cluster(rows: list[Row]) -> dict[str, dict[str, dict]]:
-    return evaluate_by_dimension(rows, lambda r: r["cluster"])
+    return evaluate_by_dimension(rows, _cluster_key)
 
 
 def evaluate_by_promotion(rows: list[Row]) -> dict[str, dict[str, dict]]:
-    """Excludes rows whose target-date promotion status is unknown (raw
-    source null), rather than defaulting them into "not_promoted" -- the
-    same standard Phase 04's promotion_effect() holds itself to."""
-    return evaluate_by_dimension(
-        rows,
-        lambda r: None if r["target_promotion_unknown"] else ("promoted" if r["target_onpromotion"] else "not_promoted"),
-    )
+    return evaluate_by_dimension(rows, _promotion_key)
 
 
 def evaluate_by_holiday(rows: list[Row]) -> dict[str, dict[str, dict]]:
-    return evaluate_by_dimension(rows, lambda r: "holiday" if r["target_is_holiday"] else "non_holiday")
+    return evaluate_by_dimension(rows, _holiday_key)
 
 
 def evaluate_by_payday(rows: list[Row]) -> dict[str, dict[str, dict]]:
-    return evaluate_by_dimension(rows, lambda r: "payday" if r["target_is_payday"] else "non_payday")
+    return evaluate_by_dimension(rows, _payday_key)
 
 
 DIMENSIONS: dict[str, Callable[[list[Row]], dict]] = {
-    "item_family": evaluate_by_item_family,
-    "store_type": evaluate_by_store_type,
-    "cluster": evaluate_by_cluster,
-    "promotion": evaluate_by_promotion,
-    "holiday": evaluate_by_holiday,
-    "payday": evaluate_by_payday,
-    "horizon_step": evaluate_by_horizon_step,
-    "as_of_date": evaluate_by_as_of_date,
+    name: (lambda rows, fn=key_fn: evaluate_by_dimension(rows, fn))
+    for name, key_fn in SEGMENT_KEY_FUNCTIONS.items()
 }
 
 
