@@ -1,0 +1,11 @@
+# Airflow (Phase 12) -- installed into its own isolated virtualenv,
+# deliberately separate from this project's main dependencies (pyproject.toml).
+# See docs/phase_reports/phase12.md for why, and for the exact commands to
+# set up AIRFLOW_HOME, initialize the metadata DB, and validate the DAG.
+#
+# Setup:
+#   python3 -m venv .venv-airflow
+#   .venv-airflow/bin/pip install -r requirements-airflow.txt \
+#       --constraint https://raw.githubusercontent.com/apache/airflow/constraints-2.10.4/constraints-3.11.txt
+
+apache-airflow==2.10.4

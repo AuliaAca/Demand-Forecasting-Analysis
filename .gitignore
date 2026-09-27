@@ -34,6 +34,17 @@ venv/
 .ruff_cache/
 .ipynb_checkpoints/
 
+# --- Airflow (Phase 12) ---
+# Airflow's own dependency set is deliberately isolated from the project's
+# main environment (see docs/phase_reports/phase12.md) -- a separate venv
+# and metadata DB, neither of which belongs in version control. dags/ (the
+# actual DAG source) IS committed; only the runtime/metadata below is not.
+.venv-airflow/
+.airflow_home/
+airflow.cfg
+airflow-webserver.pid
+*.log
+
 # --- Credentials ---
 kaggle.json
 *.pem
