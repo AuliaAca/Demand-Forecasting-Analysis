@@ -19,14 +19,19 @@ from __future__ import annotations
 
 import datetime
 from dataclasses import asdict, dataclass
-from typing import Any
+from typing import Any, Callable
 
 import duckdb
 
-from demandflow.forecasting.baselines import naive_forecast, seasonal_naive_forecast
-
 MODEL_NAIVE = "naive"
 MODEL_SEASONAL_NAIVE = "seasonal_naive"
+
+# A model is any (history, horizon) -> forecasts function. It returns None
+# (rather than raising) when it cannot produce a forecast from this history
+# -- e.g. Seasonal Naive needs a full season, Croston needs at least one
+# nonzero observation -- so run_rolling_origin_backtest can skip it for that
+# one (series, as_of) combination without the whole backtest failing.
+ForecastFn = Callable[[list[float], int], "list[float] | None"]
 
 
 @dataclass(frozen=True)
@@ -87,12 +92,45 @@ def load_dense_series(
     return series
 
 
+def default_models(season_length: int) -> dict[str, ForecastFn]:
+    """The Phase 05 baseline pair, as (history, horizon) -> forecasts | None
+    adapters -- ValueError from insufficient history becomes "skip this
+    (series, as_of) combination" rather than an exception through the loop.
+    """
+    from demandflow.forecasting.baselines import naive_forecast, seasonal_naive_forecast
+
+    def _naive(history: list[float], horizon: int) -> list[float] | None:
+        return naive_forecast(history, horizon) if history else None
+
+    def _seasonal_naive(history: list[float], horizon: int) -> list[float] | None:
+        if len(history) < season_length:
+            return None
+        return seasonal_naive_forecast(history, horizon, season_length)
+
+    return {MODEL_NAIVE: _naive, MODEL_SEASONAL_NAIVE: _seasonal_naive}
+
+
 def run_rolling_origin_backtest(
     con: duckdb.DuckDBPyConnection,
     as_of_dates: list[datetime.date],
     horizon: int,
-    season_length: int,
+    models: dict[str, ForecastFn] | None = None,
+    season_length: int | None = None,
 ) -> list[ForecastRecord]:
+    """Runs every model in `models` over every (series, as_of) combination.
+
+    `models` defaults to Phase 05's Naive + Seasonal Naive pair (built via
+    `season_length`, kept as a convenience parameter so Phase 05's own
+    call sites don't need to change) -- Phase 06+ passes its own, larger
+    `models` dict (e.g. adding SES/Croston/SBA) built with
+    demandflow.forecasting.statistical's adapters, reusing this exact same
+    leakage-safe loop rather than forking it.
+    """
+    if models is None:
+        if season_length is None:
+            raise ValueError("run_rolling_origin_backtest needs either `models` or `season_length`")
+        models = default_models(season_length)
+
     series = load_dense_series(con)
     records: list[ForecastRecord] = []
 
@@ -104,12 +142,7 @@ def run_rolling_origin_backtest(
                 continue  # as_of falls outside this series' active window
 
             history = values[: cutoff_idx + 1]  # strictly <= as_of: the leakage boundary
-            naive_preds = naive_forecast(history, horizon)
-            seasonal_preds = (
-                seasonal_naive_forecast(history, horizon, season_length)
-                if len(history) >= season_length
-                else None
-            )
+            preds_by_model = {name: fn(history, horizon) for name, fn in models.items()}
 
             for h in range(1, horizon + 1):
                 target_idx = cutoff_idx + h
@@ -117,19 +150,14 @@ def run_rolling_origin_backtest(
                 is_scored = target_idx < len(dates) and dates[target_idx] == target_date
                 actual = values[target_idx] if is_scored else None
 
-                records.append(
-                    ForecastRecord(
-                        as_of_date=as_of.isoformat(), horizon_step=h, target_date=target_date.isoformat(),
-                        store_nbr=store_nbr, item_nbr=item_nbr, model=MODEL_NAIVE,
-                        forecast=naive_preds[h - 1], actual=actual, is_scored=is_scored,
-                    )
-                )
-                if seasonal_preds is not None:
+                for model_name, preds in preds_by_model.items():
+                    if preds is None:
+                        continue  # this model couldn't forecast from this history
                     records.append(
                         ForecastRecord(
                             as_of_date=as_of.isoformat(), horizon_step=h, target_date=target_date.isoformat(),
-                            store_nbr=store_nbr, item_nbr=item_nbr, model=MODEL_SEASONAL_NAIVE,
-                            forecast=seasonal_preds[h - 1], actual=actual, is_scored=is_scored,
+                            store_nbr=store_nbr, item_nbr=item_nbr, model=model_name,
+                            forecast=preds[h - 1], actual=actual, is_scored=is_scored,
                         )
                     )
     return records
@@ -163,6 +191,38 @@ def records_to_dicts(records: list[ForecastRecord]) -> list[dict[str, Any]]:
 
 def _pairs_for(records: list[ForecastRecord], model: str) -> list[tuple[float, float]]:
     return [(r.actual, r.forecast) for r in records if r.is_scored and r.model == model]
+
+
+def summarize_by_segment(
+    records: list[ForecastRecord], item_to_segment: dict[int, str]
+) -> dict[str, dict[str, Any]]:
+    """WAPE/MAE/etc. per model, broken out by an arbitrary per-item segment
+    label (e.g. Phase 04's intermittency classification). Items missing
+    from `item_to_segment` are grouped under "unclassified" rather than
+    silently dropped.
+
+    A small, generic building block -- not Phase 08's full accuracy-by-
+    segment/horizon framework, but a piece Phase 08 can reuse for other
+    segment definitions (family, hub, ABC class) once it exists.
+    """
+    from demandflow.forecasting.metrics import summarize as summarize_pairs
+
+    models = sorted({r.model for r in records})
+    segments = sorted(set(item_to_segment.values()) | {"unclassified"})
+
+    result: dict[str, dict[str, Any]] = {}
+    for segment in segments:
+        if segment == "unclassified":
+            segment_records = [r for r in records if r.item_nbr not in item_to_segment]
+        else:
+            item_nbrs = {item for item, s in item_to_segment.items() if s == segment}
+            segment_records = [r for r in records if r.item_nbr in item_nbrs]
+        if not segment_records:
+            continue
+        result[segment] = {
+            model: summarize_pairs(_pairs_for(segment_records, model)) for model in models
+        }
+    return result
 
 
 def summarize_backtest(records: list[ForecastRecord]) -> dict[str, Any]:
