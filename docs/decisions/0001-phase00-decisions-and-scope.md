@@ -1,7 +1,7 @@
 # ADR 0001 — Phase 00 Finalized Decisions, Controlled Development Scope, and Critical Reassessment
 
-**Status:** Accepted (dataset, grain, tooling, pricing gap) / **Open** (hardware sizing — pending the project owner's laptop specs; see §4).
-**Date:** 2026-09-27
+**Status:** Accepted (all items, including hardware sizing — see §4).
+**Date:** 2026-09-27 (hardware sizing closed 2026-09-27)
 **Deciders:** project owner, reviewing the Phase 00 plan in [`docs/00_requirement_analysis_and_system_plan.md`](../00_requirement_analysis_and_system_plan.md).
 **Still true:** no dataset has been downloaded and no implementation code has been written. This ADR closes out Phase 00 decision-making; it does not start Phase 01.
 
@@ -20,7 +20,7 @@
 | D7 | BigQuery mode | Sandbox (free, no card, 60-day table expiry, no DML) for development — confirmed. |
 | D8 | Dashboard tool | Looker Studio, with a local generated report as the MVP fallback — confirmed. |
 | D9 | Airflow | **Optional**, decided only after the MVP (Phases 00–11) is working, and only if it adds evidence beyond what the CLI + Makefile already demonstrate. Default lean is **not to build it** unless there is spare time — see §5, item A2. |
-| D10 | Where the pipeline runs | Locally, **pending confirmation of laptop RAM/disk** — see §4. Raw data and large processed data will not be pushed to GitHub under any outcome. |
+| D10 | Where the pipeline runs | **Locally, on the project owner's Windows laptop, working from the `D:` volume.** Confirmed sufficient — see §4. Raw data and large processed data will not be pushed to GitHub under any outcome. |
 | D11 | Public repository contents | **Resolved.** `CLAUDE.md` has been rewritten as an anonymized, paraphrased restatement of the target JD (no company name, no verbatim marketing copy, same requirement categories). The verbatim original is kept at `.private/JD_SOURCE_VERBATIM.md`, which is git-ignored and has never been committed. `docs/00_requirement_analysis_and_system_plan.md` has been scrubbed of the company name and identifying details (country, founding year, tagline) for the same reason. See §6. |
 
 ---
@@ -120,9 +120,25 @@ Concrete state as of this ADR:
 | Minimum | 8 GB | 15 GB free | Workable, but the full-data ingestion step **must** use DuckDB/streaming, not plain pandas, and you should not run much else at the same time during that one-time step. |
 | Comfortable | 16 GB | 20–25 GB free | No special care needed; full-data ingestion and ongoing scoped-subset work both run without tuning. |
 
-### 4.3 Open question back to you
+### 4.3 Confirmed against the project owner's actual machine — 2026-09-27
 
-**This is still open** — I do not have your laptop's actual specs. Please tell me its RAM and free disk space so I can give you a definite "yes, sufficient" / "here's what to adjust" rather than a tier table. Until then, D10 stays open, and Phase 01 should not begin.
+Reported specs (Windows laptop, two volumes):
+
+| Volume | Free | Total | % used |
+|---|---|---|---|
+| `C:` (Windows system drive) | 59.6 GB | 374 GB | ~84% used |
+| `D:` ("New Volume") | 84.0 GB | 99.9 GB | ~16% used |
+
+**Verdict: sufficient, against both the minimum and comfortable disk tiers in §4.2.** Both volumes individually clear the 15–25 GB requirement, but they are not equivalent choices:
+
+- **`C:` is already ~84% full** (only 59.6 GB free out of 374 GB). It is also the Windows system drive. Temporarily writing a ~5 GB raw CSV plus a ~1–1.5 GB Parquet copy there is technically within budget, but pushes an already-tight system drive tighter, with less headroom left over for normal OS/application use, OS updates, or the optional larger scale-up sample in §2.6.
+- **`D:` has far more headroom, both in absolute free space (84.0 GB) and as a share of the volume (84% free).** It is a secondary data volume, so filling several GB there carries no system-stability risk.
+
+**Decision: the whole project — code and data alike — should live under `D:`** (e.g. `D:\dev\Demand-Forecasting-Analysis`), not split across drives. This keeps `.gitignore`-covered data directories (raw downloads, the Parquet copy, the DuckDB warehouse file) off the nearly-full system drive entirely, and leaves 80+ GB of comfortable room — enough for the scoped-subset workflow many times over, and enough to also keep a full raw Parquet copy locally if the optional scale-up check (§2.6) is ever run.
+
+RAM was not reported. It does not change the verdict: the plan already mandates DuckDB (never a naive `pandas.read_csv()` on the full file) specifically because that one-time full-data step is disk-spillable and not RAM-bound (§4.1). If the machine's RAM later turns out to be unusually low (well under 8 GB), that would only affect how comfortably other applications can run at the same time as that one-time ingestion step — it would not block the approach.
+
+**D10 is closed. Disk is sufficient on `D:`. No blocker remains on hardware.**
 
 ---
 
@@ -178,7 +194,6 @@ I don't see any JD-required capability with zero planned coverage.
 
 ## 6. What happens next
 
-This ADR finalizes Phase 00. Consistent with the phase discipline in `CLAUDE.md` §18, **Phase 01 has not started** — no data has been downloaded, no ingestion code has been written. Before Phase 01 can begin, two things are still needed from you:
+This ADR finalizes Phase 00. Every decision (D1–D11) is now closed, including hardware sizing (§4.3: sufficient, work from `D:`). Consistent with the phase discipline in `CLAUDE.md` §18, **Phase 01 has still not started** — no data has been downloaded, no ingestion code has been written. The only remaining step is:
 
-1. **Your laptop's RAM and free disk space** (§4.3), so D10 can close.
-2. **Confirmation to proceed to Phase 01** with the scope in §2 — dataset acquisition, full-data profiling, the stratified item-selection query, and the dataset card — since starting a new phase is a deliberate step, not an automatic continuation.
+1. **Your explicit confirmation to proceed to Phase 01** with the scope in §2 — dataset acquisition, full-data profiling, the stratified item-selection query, and the dataset card, all run under `D:\...` on your machine — since starting a new phase is a deliberate step, not an automatic continuation.
