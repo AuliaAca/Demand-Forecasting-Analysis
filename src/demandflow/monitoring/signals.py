@@ -38,14 +38,16 @@ UNKNOWN = "UNKNOWN"
 # Ranked worst-to-best is BREACH > WARN > UNKNOWN > OK: "we don't know" is
 # deliberately ranked above "everything is fine" in overall_status(), so a
 # signal that couldn't be computed never gets silently absorbed into a
-# clean bill of health.
-_SEVERITY_RANK = {OK: 0, UNKNOWN: 1, WARN: 2, BREACH: 3}
+# clean bill of health. Exposed (not private) so Phase 11's alerting can
+# tell an escalation from a de-escalation using this exact ranking, rather
+# than defining its own copy that could silently drift out of sync.
+SEVERITY_RANK = {OK: 0, UNKNOWN: 1, WARN: 2, BREACH: 3}
 
 
 def overall_status(statuses: list[str]) -> str:
     if not statuses:
         return UNKNOWN
-    return max(statuses, key=lambda s: _SEVERITY_RANK[s])
+    return max(statuses, key=lambda s: SEVERITY_RANK[s])
 
 
 # --- Forecast accuracy ------------------------------------------------------

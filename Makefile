@@ -11,7 +11,7 @@
 # not a requirement — see docs/phase_reports/phase01.md for the equivalent
 # direct commands if `make` isn't available.
 
-.PHONY: install test smoke acquire convert profile select-scope dataset-card phase01 clean-smoke dq dq-report phase02 warehouse phase03 eda eda-report phase04 backtest backtest-report phase05 statistical-backtest statistical-report phase06 ml-backtest ml-report phase07 evaluate evaluate-report phase08 rca rca-report phase09 monitor monitor-report phase10
+.PHONY: install test smoke acquire convert profile select-scope dataset-card phase01 clean-smoke dq dq-report phase02 warehouse phase03 eda eda-report phase04 backtest backtest-report phase05 statistical-backtest statistical-report phase06 ml-backtest ml-report phase07 evaluate evaluate-report phase08 rca rca-report phase09 monitor monitor-report phase10 alerts alerts-report phase11
 
 install:
 	pip install -e ".[dev]"
@@ -125,3 +125,12 @@ monitor-report:
 
 phase10: monitor monitor-report
 	@echo "Phase 10 pipeline complete. See docs/monitoring.md"
+
+alerts:
+	python -m demandflow.alerts.run_alerts
+
+alerts-report:
+	python -m demandflow.reporting.generate_alerts_report
+
+phase11: alerts alerts-report
+	@echo "Phase 11 pipeline complete. See docs/alerts_and_tracker.md"
