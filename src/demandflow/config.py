@@ -45,11 +45,20 @@ class DatasetConfig:
 
 
 @dataclass(frozen=True)
+class ForecastingConfig:
+    horizon_days: int
+    season_length_days: int
+    as_of_cadence_days: int
+    min_history_days: int
+
+
+@dataclass(frozen=True)
 class ProjectConfig:
     random_seed: int
     dataset: DatasetConfig
     paths: Paths
     dev_scope: DevScopeConfig
+    forecasting: ForecastingConfig
     raw: dict[str, Any]
 
 
@@ -98,10 +107,18 @@ def load_config(config_path: Path | None = None) -> ProjectConfig:
         promo_intensity_threshold=float(raw["dev_scope"]["promo_intensity_threshold"]),
     )
 
+    forecasting = ForecastingConfig(
+        horizon_days=int(raw["forecasting"]["horizon_days"]),
+        season_length_days=int(raw["forecasting"]["season_length_days"]),
+        as_of_cadence_days=int(raw["forecasting"]["as_of_cadence_days"]),
+        min_history_days=int(raw["forecasting"]["min_history_days"]),
+    )
+
     return ProjectConfig(
         random_seed=int(raw["random_seed"]),
         dataset=dataset,
         paths=paths,
         dev_scope=dev_scope,
+        forecasting=forecasting,
         raw=raw,
     )

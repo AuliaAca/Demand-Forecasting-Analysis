@@ -42,3 +42,16 @@ dev_scope:
   # An item counts as "frequently promoted" if on-promotion on more than
   # this share of its observed days. [DECISION] threshold, not a JD figure.
   promo_intensity_threshold: 0.05
+
+forecasting:
+  # Time-aware rolling-origin backtest (CLAUDE.md §10). All [DECISION]/
+  # [ASSUMPTION] values, not JD requirements -- horizon and cadence are
+  # carried over from Phase 00's business scenario (S4/S5); season_length
+  # is new in Phase 05, the conventional weekly period for daily retail
+  # data (see docs/phase_reports/phase05.md).
+  horizon_days: 14
+  season_length_days: 7
+  as_of_cadence_days: 7
+  # Minimum history (in days) before the first as-of date -- must cover at
+  # least one full season for Seasonal Naive to have a value to reuse.
+  min_history_days: 7

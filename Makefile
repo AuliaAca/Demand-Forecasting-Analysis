@@ -11,7 +11,7 @@
 # not a requirement — see docs/phase_reports/phase01.md for the equivalent
 # direct commands if `make` isn't available.
 
-.PHONY: install test smoke acquire convert profile select-scope dataset-card phase01 clean-smoke dq dq-report phase02 warehouse phase03 eda eda-report phase04
+.PHONY: install test smoke acquire convert profile select-scope dataset-card phase01 clean-smoke dq dq-report phase02 warehouse phase03 eda eda-report phase04 backtest backtest-report phase05
 
 install:
 	pip install -e ".[dev]"
@@ -71,3 +71,12 @@ eda-report:
 
 phase04: eda eda-report
 	@echo "Phase 04 pipeline complete. See docs/eda_findings.md"
+
+backtest:
+	python -m demandflow.forecasting.run_backtest
+
+backtest-report:
+	python -m demandflow.reporting.generate_forecast_baselines_report
+
+phase05: backtest backtest-report
+	@echo "Phase 05 pipeline complete. See docs/forecast_baselines.md"

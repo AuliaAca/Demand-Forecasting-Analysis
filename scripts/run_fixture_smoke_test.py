@@ -6,11 +6,13 @@ repository controls and ships in tests/fixtures/. It writes its output under
 reports/fixture_smoke_test/ (git-ignored), never to docs/dataset_card.md or
 docs/data_quality/dq_report.md, so it can never be mistaken for real output.
 
-Covers, as of Phase 04:
+Covers, as of Phase 05:
     acquire -> convert -> profile -> select dev scope -> render dataset card
     -> run DQ rules -> render DQ report -> build the SQL warehouse
     (staging -> intermediate -> marts) -> reconciliation checks -> run the
-    exploratory demand analysis -> render the EDA findings report
+    exploratory demand analysis -> render the EDA findings report -> run
+    the rolling-origin backtest (Naive vs. Seasonal Naive) -> render the
+    forecast baselines report
 
 Usage:
     python scripts/run_fixture_smoke_test.py
@@ -62,25 +64,25 @@ def main() -> None:
     import json
 
     cfg = load_config()
-    print(f"[1/11] Data dir for this smoke test: {cfg.paths.data_dir}")
+    print(f"[1/13] Data dir for this smoke test: {cfg.paths.data_dir}")
 
-    print("[2/11] 'Acquiring' data (copying the fixture in place of a real Kaggle download)")
+    print("[2/13] 'Acquiring' data (copying the fixture in place of a real Kaggle download)")
     _copy_fixture_as_raw(FIXTURE_DIR, cfg.paths.raw_dir)
     manifest = build_manifest(cfg.paths.raw_dir, cfg.dataset.kaggle_competition_slug)
     write_manifest(manifest, cfg.paths.raw_dir)
     print(f"       {len(manifest.files)} files checksummed")
 
-    print("[3/11] Converting CSV -> Parquet")
+    print("[3/13] Converting CSV -> Parquet")
     counts = convert_all(cfg)
     print(f"       {counts}")
 
-    print("[4/11] Profiling")
+    print("[4/13] Profiling")
     report = profile(cfg)
     profile_path = OUTPUT_DIR / "profile_summary.json"
     write_report(report, profile_path)
     print(f"       wrote {profile_path}")
 
-    print("[5/11] Selecting the controlled development scope")
+    print("[5/13] Selecting the controlled development scope")
     con = duckdb.connect()
     stats = compute_item_stats(
         con, cfg.paths.parquet_dir / "train.parquet", cfg.paths.parquet_dir / "items.parquet", cfg.dev_scope
@@ -94,7 +96,7 @@ def main() -> None:
     con.close()
     print(f"       selected {summary['selected_items']}/{summary['total_items']} items -> {dev_scope_csv_path}")
 
-    print("[6/11] Rendering the dataset card (fixture preview — NOT the real dataset card)")
+    print("[6/13] Rendering the dataset card (fixture preview — NOT the real dataset card)")
     card_path = OUTPUT_DIR / "dataset_card_PREVIEW.md"
     generate_dataset_card(
         profile_path=profile_path,
@@ -105,7 +107,7 @@ def main() -> None:
     )
     print(f"       wrote {card_path}")
 
-    print("[7/11] Running the Phase 02 data-quality rule catalog")
+    print("[7/13] Running the Phase 02 data-quality rule catalog")
     con = duckdb.connect()
     available_tables = [p.stem for p in cfg.paths.parquet_dir.glob("*.parquet")]
     findings = run_all_rules(
@@ -121,12 +123,12 @@ def main() -> None:
     severities = ", ".join(f"{f.rule_id}={f.severity}" for f in findings)
     print(f"       {severities}")
 
-    print("[8/11] Rendering the DQ report (fixture preview — NOT the real DQ report)")
+    print("[8/13] Rendering the DQ report (fixture preview — NOT the real DQ report)")
     dq_report_path = OUTPUT_DIR / "dq_report_PREVIEW.md"
     generate_dq_report(findings_path, dq_report_path, cfg.dataset.display_name)
     print(f"       wrote {dq_report_path}")
 
-    print("[9/11] Building the SQL warehouse (staging -> intermediate -> marts) and reconciling")
+    print("[9/13] Building the SQL warehouse (staging -> intermediate -> marts) and reconciling")
     from demandflow.transform.build_warehouse import build_warehouse
 
     warehouse_db_path = OUTPUT_DIR / "warehouse.duckdb"
@@ -138,19 +140,41 @@ def main() -> None:
         print(f"       [{'PASS' if c.passed else 'FAIL'}] {c.name}: {c.detail}")
     failed = [c for c in checks if not c.passed]
 
-    print("[10/11] Running the Phase 04 exploratory demand analysis")
+    print("[10/13] Running the Phase 04 exploratory demand analysis")
     from demandflow.analysis.run_eda import run_and_write
 
     eda_result = run_and_write(cfg, db_path=warehouse_db_path, out_dir=OUTPUT_DIR / "phase04")
     print(f"       wrote {eda_result['summary_path']} and {len(eda_result['chart_paths'])} chart(s)")
 
-    print("[11/11] Rendering the EDA findings report (fixture preview — NOT the real findings)")
+    print("[11/13] Rendering the EDA findings report (fixture preview — NOT the real findings)")
     from demandflow.reporting.generate_eda_report import generate_and_write as generate_eda_report
 
     eda_report_path = OUTPUT_DIR / "eda_findings_PREVIEW.md"
     eda_chart_paths = {name: str(path) for name, path in eda_result["chart_paths"].items()}
     generate_eda_report(eda_result["summary_path"], eda_report_path, cfg.dataset.display_name, eda_chart_paths)
     print(f"       wrote {eda_report_path}")
+
+    print("[12/13] Running the Phase 05 rolling-origin backtest (Naive vs. Seasonal Naive)")
+    from demandflow.forecasting.run_backtest import run_and_write as run_backtest
+
+    backtest_result = run_backtest(cfg, db_path=warehouse_db_path, out_dir=OUTPUT_DIR / "phase05")
+    bt_summary = backtest_result["summary"]
+    print(
+        f"       {bt_summary['total_scored_records']}/{bt_summary['total_records']} scored; "
+        f"lower-WAPE model: {bt_summary['lower_wape_model']}"
+    )
+
+    print("[13/13] Rendering the forecast baselines report (fixture preview — NOT the real report)")
+    from demandflow.reporting.generate_forecast_baselines_report import (
+        generate_and_write as generate_backtest_report,
+    )
+
+    backtest_report_path = OUTPUT_DIR / "forecast_baselines_PREVIEW.md"
+    generate_backtest_report(
+        backtest_result["summary_path"], backtest_report_path, cfg.dataset.display_name,
+        cfg.forecasting.horizon_days, cfg.forecasting.season_length_days, cfg.forecasting.as_of_cadence_days,
+    )
+    print(f"       wrote {backtest_report_path}")
 
     print("\nSmoke test complete. All outputs are under:", OUTPUT_DIR)
     if failed:
