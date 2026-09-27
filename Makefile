@@ -11,7 +11,7 @@
 # not a requirement — see docs/phase_reports/phase01.md for the equivalent
 # direct commands if `make` isn't available.
 
-.PHONY: install test smoke acquire convert profile select-scope dataset-card phase01 clean-smoke dq dq-report phase02 warehouse phase03 eda eda-report phase04 backtest backtest-report phase05 statistical-backtest statistical-report phase06 ml-backtest ml-report phase07 evaluate evaluate-report phase08 rca rca-report phase09 monitor monitor-report phase10 alerts alerts-report phase11 airflow-install airflow-validate airflow-test phase12
+.PHONY: install test smoke acquire convert profile select-scope dataset-card phase01 clean-smoke dq dq-report phase02 warehouse phase03 eda eda-report phase04 backtest backtest-report phase05 statistical-backtest statistical-report phase06 ml-backtest ml-report phase07 evaluate evaluate-report phase08 rca rca-report phase09 monitor monitor-report phase10 alerts alerts-report phase11 airflow-install airflow-validate airflow-test phase12 bigquery-validate phase13
 
 install:
 	pip install -e ".[dev]"
@@ -155,3 +155,12 @@ airflow-test:
 
 phase12: airflow-validate airflow-test
 	@echo "Phase 12 pipeline complete. See docs/phase_reports/phase12.md"
+
+# --- BigQuery (Phase 13, bonus) — see docs/phase_reports/phase13.md ---
+
+bigquery-validate:
+	python -m demandflow.bigquery.validate_sql
+	python -m pytest tests/unit/test_bigquery_sql.py -v
+
+phase13: bigquery-validate
+	@echo "Phase 13 pipeline complete. See docs/phase_reports/phase13.md"

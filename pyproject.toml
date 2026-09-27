@@ -17,6 +17,7 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
     "pytest>=8.0",
+    "sqlglot>=25.0",
 ]
 
 [build-system]
