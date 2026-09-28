@@ -134,12 +134,7 @@ available.
 
 ## A note on process
 
-This project was built iteratively, phase by phase, with an AI coding
-assistant (Claude Code) working from `CLAUDE.md` as persistent context —
-one phase implemented and reviewed at a time, never silently starting the
-next. `CLAUDE.md` itself is committed to this repository, so the exact
-rules and scope discipline the project was built under are as visible as
-the code.
+This project was built iteratively, phase by phase
 
 ---
 
